@@ -19,6 +19,9 @@ __pycache__/
 dist/
 build/
 
+# Per-user dedup registry — contains vault-local data, not suitable for git
+processed.json
+
 # OS artifacts
 .DS_Store
 Thumbs.db
