@@ -1,0 +1,54 @@
+# Canonical tag taxonomy for ObsidianDataWeave
+# Tags appear as #domain/subtag in Obsidian (e.g., #tech/ai)
+# Claude may add new tags when nothing fits — additions logged to proposed-tags.md
+version: 1
+tags:
+  tech:
+    - ai
+    - llm
+    - python
+    - javascript
+    - devops
+    - security
+    - data
+    - tools
+    - automation
+    - web
+  productivity:
+    - pkm
+    - notetaking
+    - gtd
+    - workflow
+    - obsidian
+    - zettelkasten
+    - moc
+    - templates
+  science:
+    - neuroscience
+    - biology
+    - physics
+    - mathematics
+    - research-methods
+    - psychology
+  personal:
+    - health
+    - learning
+    - finance
+    - relationships
+    - habits
+  creative:
+    - writing
+    - design
+    - content
+    - storytelling
+  business:
+    - startup
+    - marketing
+    - strategy
+    - management
+    - analytics
+  philosophy:
+    - epistemology
+    - ethics
+    - cognition
+    - decision-making
