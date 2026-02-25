@@ -42,8 +42,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — SKILL.md with atomization prompt, processing steps, guardrails, and few-shot example
-- [ ] 02-02-PLAN.md — atomize.py orchestrator with prompt assembly, Claude invocation, and atom plan validation
+- [x] 02-01-PLAN.md — SKILL.md with atomization prompt, processing steps, guardrails, and few-shot example
+- [x] 02-02-PLAN.md — atomize.py orchestrator with prompt assembly, Claude invocation, and atom plan validation
 
 ### Phase 3: Writers
 **Goal**: The atom plan produced in Phase 2 is rendered to .md files in staging, then committed to the real Obsidian vault with correct folder routing, idempotency, and MOC files created or updated
@@ -54,11 +54,11 @@ Plans:
   2. Running the same pipeline twice on the same document does not create duplicate notes — existing notes are skipped by content hash
   3. A MOC file is created for the processed document linking all generated atomic notes, organized by the source document's heading structure
   4. No files are written directly to the vault — all generation goes through /tmp/dw/staging/ first, vault_writer.py commits last
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 03-01: generate_notes.py (atom plan JSON → .md files in staging with YAML frontmatter)
-- [ ] 03-02: vault_writer.py (staging → vault, content-hash dedup, folder routing) and moc_manager.py (MOC create/update)
+- [ ] 03-01-PLAN.md — generate_notes.py: atom plan JSON to .md files in staging with YAML frontmatter and filename sanitization
+- [ ] 03-02-PLAN.md — vault_writer.py (staging to vault with dedup registry and folder routing) + process.py (full pipeline wrapper)
 
 ### Phase 4: Publish
 **Goal**: A new user can install ObsidianDataWeave with a single command, run their first document through the pipeline following the README, and the GitHub repository contains no hardcoded personal paths or secrets
