@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** One command turns any research document into properly structured, linked atomic notes inside Obsidian
-**Current focus:** Phase 3 executing — 1 of 2 plans complete (generate_notes.py done)
+**Current focus:** Phase 3 complete — 2 of 2 plans done. Phase 4 pending (packaging/install).
 
 ## Current Position
 
-Phase: 3 of 4 (Writers)
-Plan: 1 of 2 in current phase (03-01 complete, 03-02 pending)
-Status: Executing
-Last activity: 2026-02-26 — 03-01 complete (generate_notes.py — atom plan to staging .md renderer)
+Phase: 3 of 4 (Writers) — COMPLETE
+Plan: 2 of 2 in current phase (03-01 and 03-02 complete)
+Status: Phase 3 complete, ready for Phase 4
+Last activity: 2026-02-26 — 03-02 complete (vault_writer.py + process.py — full writer pipeline)
 
-Progress: [██████░░░░] 62%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 2.3 min
-- Total execution time: 0.2 hours
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
@@ -29,10 +29,10 @@ Progress: [██████░░░░] 62%
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 6 min | 2 min |
 | 02-ai-core | 2 | 5 min | 2.5 min |
-| 03-writers | 1 | 3 min | 3 min |
+| 03-writers | 2 | 5 min | 2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (2 min), 02-01 (2 min), 02-02 (3 min), 03-01 (3 min)
+- Last 5 plans: 02-01 (2 min), 02-02 (3 min), 03-01 (3 min), 03-02 (2 min)
 - Trend: Consistent 2-3 min/plan
 
 *Updated after each plan completion*
@@ -40,6 +40,7 @@ Progress: [██████░░░░] 62%
 | Phase 02-ai-core P01 | 2 | 2 tasks | 1 file |
 | Phase 02-ai-core P02 | 3 | 2 tasks | 1 file |
 | Phase 03-writers P01 | 3 | 1 task | 1 file |
+| Phase 03-writers P02 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,11 @@ Progress: [██████░░░░] 62%
 - [Phase 03-writers 03-01]: UTF-8 byte truncation (not char count) for filenames — Cyrillic = 2 bytes/char, 200B cap leaves margin within ext4's 255B limit
 - [Phase 03-writers 03-01]: source_doc always double-quoted in frontmatter via string interpolation to handle colons in document titles (e.g. "Smart Connections: ...")
 - [Phase 03-writers 03-01]: String interpolation over PyYAML for frontmatter — guarantees exact field order and quoting without external dependency
+- [Phase 03-writers 03-02]: vault_writer.py hard-errors on missing config.toml — vault_path is required, no fallback (unlike generate_notes.py which has a staging fallback)
+- [Phase 03-writers 03-02]: MOC files always overwritten (auto-generated, no manual edits expected) — prevents stale MOC accumulation on repeated runs
+- [Phase 03-writers 03-02]: Registry updated atomically after all vault writes (single save_registry call) — prevents partial-write state corruption
+- [Phase 03-writers 03-02]: Non-TTY auto-skip for conflict resolution — sys.stdin.isatty() detects Claude Code subprocess context and skips rather than hanging on input()
+- [Phase 03-writers 03-02]: process.py uses subprocess (not direct imports) — each script remains independently callable and testable
 
 ### Pending Todos
 
@@ -79,5 +85,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 03-writers 03-01-PLAN.md (generate_notes.py)
-Resume file: .planning/phases/03-writers/03-02-PLAN.md
+Stopped at: Completed 03-writers 03-02-PLAN.md (vault_writer.py + process.py — Phase 3 complete)
+Resume file: .planning/phases/04-packaging/ (Phase 4 pending)
