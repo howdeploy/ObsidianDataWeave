@@ -26,9 +26,9 @@ Four phases, each blocked on the previous. Phase 1 locks the config and schema d
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Config schema, tags.yaml taxonomy, project structure scaffold
-- [ ] 01-02-PLAN.md — rclone fetch script and .docx parser (structured JSON output)
-- [ ] 01-03-PLAN.md — Rules extraction from reference .docx files into rules/*.md
+- [x] 01-01-PLAN.md — Config schema, tags.yaml taxonomy, project structure scaffold
+- [x] 01-02-PLAN.md — rclone fetch script and .docx parser (structured JSON output)
+- [x] 01-03-PLAN.md — Rules extraction from reference .docx files into rules/*.md
 
 ### Phase 2: AI Core
 **Goal**: The Claude skill can read a parsed JSON document plus rules and produce a complete atom plan — a structured list of atomic notes with titles, bodies, tags, wikilinks, and MOC hints — ready for Phase 3 to render
@@ -39,12 +39,11 @@ Plans:
   2. Every note in the atom plan has YAML frontmatter fields (tags, date, source_doc, note_type) with tags drawn only from tags.yaml taxonomy
   3. Wikilinks in the atom plan reference only note titles that exist within the same run, with 3-7 links per note maximum
   4. The atom plan includes a MOC entry that mirrors the source document's H1/H2 structure as a two-level hierarchy
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: SKILL.md with atomization prompt, guardrails, and rules loading
-- [ ] 02-02: Tag inference and wikilink generation logic in prompt
-- [ ] 02-03: MOC planning logic and atom plan JSON schema validation
+- [ ] 02-01-PLAN.md — SKILL.md with atomization prompt, processing steps, guardrails, and few-shot example
+- [ ] 02-02-PLAN.md — atomize.py orchestrator with prompt assembly, Claude invocation, and atom plan validation
 
 ### Phase 3: Writers
 **Goal**: The atom plan produced in Phase 2 is rendered to .md files in staging, then committed to the real Obsidian vault with correct folder routing, idempotency, and MOC files created or updated
@@ -81,6 +80,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-02-25 |
-| 2. AI Core | 0/3 | Not started | - |
+| 2. AI Core | 0/2 | In progress | - |
 | 3. Writers | 0/2 | Not started | - |
 | 4. Publish | 0/2 | Not started | - |
