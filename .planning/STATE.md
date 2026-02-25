@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** One command turns any research document into properly structured, linked atomic notes inside Obsidian
-**Current focus:** Phase 2 planned — ready to execute
+**Current focus:** Phase 2 executing — plan 1 of 2 complete
 
 ## Current Position
 
 Phase: 2 of 4 (AI Core)
-Plan: 0 of 2 in current phase
-Status: Planned, ready to execute
-Last activity: 2026-02-26 — Phase 2 planned (2 plans in 2 waves, verification passed)
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-02-26 — 02-01 complete: SKILL.md created (898 words, 6-step pipeline, few-shot example)
 
-Progress: [███░░░░░░░] 25%
+Progress: [████░░░░░░] 37%
 
 ## Performance Metrics
 
@@ -28,13 +28,15 @@ Progress: [███░░░░░░░] 25%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 6 min | 2 min |
+| 02-ai-core | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (2 min), 01-03 (2 min)
+- Last 5 plans: 01-01 (2 min), 01-02 (2 min), 01-03 (2 min), 02-01 (2 min)
 - Trend: Consistent 2 min/plan
 
 *Updated after each plan completion*
 | Phase 01-foundation P02 | 3 | 2 tasks | 2 files |
+| Phase 02-ai-core P01 | 2 | 2 tasks | 1 file |
 
 ## Accumulated Context
 
@@ -52,6 +54,9 @@ Progress: [███░░░░░░░] 25%
 - [Phase 01-foundation]: Architecture .docx has 3 H3 headings = 4 sections total; parser correct, plan assertion was wrong about heading count
 - [Phase 01-foundation]: Table position injection uses id(p._p) XML element identity for accurate paragraph-table ordering in JSON output
 - [Phase 01-foundation]: rclone remote name: strip trailing colon then reattach — handles both 'gdrive:' and 'gdrive' remote name formats
+- [Phase 02-ai-core 02-01]: SKILL.md uses runtime injection pattern — no embedded tags.yaml or rules content; atomize.py injects at call time
+- [Phase 02-ai-core 02-01]: Two-pass wikilink strategy: enumerate all titles in Step 1, insert links in Step 3 using exact title strings — prevents broken wikilinks
+- [Phase 02-ai-core 02-01]: Atom plan JSON schema locked at schema_version 1 — additions are breaking changes requiring version bump
 
 ### Pending Todos
 
@@ -65,5 +70,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Phase 2 planned, ready for /gsd:execute-phase 2
-Resume file: .planning/phases/02-ai-core/02-01-PLAN.md
+Stopped at: Completed 02-ai-core plan 01 (SKILL.md created)
+Resume file: .planning/phases/02-ai-core/02-02-PLAN.md
