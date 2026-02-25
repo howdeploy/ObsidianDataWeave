@@ -23,12 +23,12 @@ Four phases, each blocked on the previous. Phase 1 locks the config and schema d
   3. A config.toml with vault_path and rclone remote is read at startup; a config.example.toml is committed to git with no real paths
   4. A tags.yaml canonical taxonomy exists with 30-50 tags covering the user's vault topics
   5. rules/*.md files exist containing distilled methodology from the two reference .docx files, ready to be loaded into Claude context
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: Config schema, tags.yaml taxonomy, project structure scaffold
-- [ ] 01-02: rclone fetch script and .docx parser (structured JSON output)
-- [ ] 01-03: Rules extraction from reference .docx files into rules/*.md
+- [ ] 01-01-PLAN.md — Config schema, tags.yaml taxonomy, project structure scaffold
+- [ ] 01-02-PLAN.md — rclone fetch script and .docx parser (structured JSON output)
+- [ ] 01-03-PLAN.md — Rules extraction from reference .docx files into rules/*.md
 
 ### Phase 2: AI Core
 **Goal**: The Claude skill can read a parsed JSON document plus rules and produce a complete atom plan — a structured list of atomic notes with titles, bodies, tags, wikilinks, and MOC hints — ready for Phase 3 to render
@@ -80,7 +80,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Not started | - |
+| 1. Foundation | 0/3 | Planned | - |
 | 2. AI Core | 0/3 | Not started | - |
 | 3. Writers | 0/2 | Not started | - |
 | 4. Publish | 0/2 | Not started | - |
