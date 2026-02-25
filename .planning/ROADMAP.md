@@ -7,7 +7,7 @@ Four phases, each blocked on the previous. Phase 1 locks the config and schema d
 ## Phases
 
 - [x] **Phase 1: Foundation** - Config, schema, rclone fetch, .docx parser, rules extraction (completed 2026-02-25)
-- [ ] **Phase 2: AI Core** - SKILL.md, atomization, tagging, wikilinks, MOC planning
+- [x] **Phase 2: AI Core** - SKILL.md, atomization, tagging, wikilinks, MOC planning (completed 2026-02-26)
 - [ ] **Phase 3: Writers** - Note generation, vault placement, MOC management, idempotency
 - [ ] **Phase 4: Publish** - Install script, README, Obsidian templates, GitHub release
 
@@ -80,6 +80,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-02-25 |
-| 2. AI Core | 0/2 | In progress | - |
+| 2. AI Core | 2/2 | Complete | 2026-02-26 |
 | 3. Writers | 0/2 | Not started | - |
 | 4. Publish | 0/2 | Not started | - |
