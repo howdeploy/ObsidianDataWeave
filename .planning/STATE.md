@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** One command turns any research document into properly structured, linked atomic notes inside Obsidian
-**Current focus:** Phase 3 planned — 2 plans in 2 waves; ready for execution
+**Current focus:** Phase 3 executing — 1 of 2 plans complete (generate_notes.py done)
 
 ## Current Position
 
 Phase: 3 of 4 (Writers)
-Plan: 0 of 2 in current phase (planned, not yet executed)
-Status: Plans verified, ready to execute
-Last activity: 2026-02-26 — Phase 3 research + planning complete (verification passed)
+Plan: 1 of 2 in current phase (03-01 complete, 03-02 pending)
+Status: Executing
+Last activity: 2026-02-26 — 03-01 complete (generate_notes.py — atom plan to staging .md renderer)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████░░░░] 62%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 2.2 min
+- Total plans completed: 6
+- Average duration: 2.3 min
 - Total execution time: 0.2 hours
 
 **By Phase:**
@@ -29,15 +29,17 @@ Progress: [█████░░░░░] 50%
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 6 min | 2 min |
 | 02-ai-core | 2 | 5 min | 2.5 min |
+| 03-writers | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (2 min), 01-03 (2 min), 02-01 (2 min), 02-02 (3 min)
+- Last 5 plans: 01-03 (2 min), 02-01 (2 min), 02-02 (3 min), 03-01 (3 min)
 - Trend: Consistent 2-3 min/plan
 
 *Updated after each plan completion*
 | Phase 01-foundation P02 | 3 | 2 tasks | 2 files |
 | Phase 02-ai-core P01 | 2 | 2 tasks | 1 file |
 | Phase 02-ai-core P02 | 3 | 2 tasks | 1 file |
+| Phase 03-writers P01 | 3 | 1 task | 1 file |
 
 ## Accumulated Context
 
@@ -61,6 +63,9 @@ Progress: [█████░░░░░] 50%
 - [Phase 02-ai-core 02-02]: Validation split: validate_atom_plan() hard errors (exit 1) vs. validate_tags/wikilinks() warnings (continue) — allows Claude's intentional semantic links
 - [Phase 02-ai-core 02-02]: proposed-tags.md always created even when empty — prevents Phase 3 FileNotFoundError; append mode with date+source headers preserves history
 - [Phase 02-ai-core 02-02]: config.toml absence falls back to default /tmp/dw/staging with stderr warning — graceful degradation, no crash
+- [Phase 03-writers 03-01]: UTF-8 byte truncation (not char count) for filenames — Cyrillic = 2 bytes/char, 200B cap leaves margin within ext4's 255B limit
+- [Phase 03-writers 03-01]: source_doc always double-quoted in frontmatter via string interpolation to handle colons in document titles (e.g. "Smart Connections: ...")
+- [Phase 03-writers 03-01]: String interpolation over PyYAML for frontmatter — guarantees exact field order and quoting without external dependency
 
 ### Pending Todos
 
@@ -69,10 +74,10 @@ None yet.
 ### Blockers/Concerns
 
 - lxml C dependency: verify `pip3 install python-docx` works without `pacman -S python-lxml` on Manjaro — document in install.sh if pacman needed
-- Cyrillic filename handling: confirm content-hash dedup and slug generation work without encoding errors on Manjaro ext4
+- Cyrillic filename handling: RESOLVED — UTF-8 byte truncation (200B) confirmed working on Manjaro ext4; generate_notes.py verified with Cyrillic test filenames
 
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Phase 3 plan-phase complete, ready for /gsd:execute-phase 3
-Resume file: .planning/phases/03-writers/03-01-PLAN.md
+Stopped at: Completed 03-writers 03-01-PLAN.md (generate_notes.py)
+Resume file: .planning/phases/03-writers/03-02-PLAN.md
