@@ -1,0 +1,24 @@
+# User config with real paths — never commit this
+config.toml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Temporary staging area
+/tmp/
+
+# Environment variables
+.env
+.env.*
+
+# Python package artifacts
+*.egg-info/
+dist/
+build/
+
+# OS artifacts
+.DS_Store
+Thumbs.db

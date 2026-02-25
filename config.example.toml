@@ -1,0 +1,15 @@
+# ObsidianDataWeave Configuration
+# Copy to config.toml and fill in your values
+
+[vault]
+vault_path = "/path/to/your/obsidian/vault"
+notes_folder = "Research & Insights"       # atomic notes destination
+moc_folder = "Guides & Overviews"          # MOC files destination
+source_folder = "Sources"                   # source document references
+
+[rclone]
+remote = "gdrive:"                          # rclone remote name (check: rclone listremotes)
+staging_dir = "/tmp/dw/staging"            # temporary staging area
+
+[processing]
+default_note_type = "atomic"               # frontmatter note_type default
