@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** One command turns any research document into properly structured, linked atomic notes inside Obsidian
-**Current focus:** Phase 2 executing — plan 1 of 2 complete
+**Current focus:** Phase 2 complete — both plans done; ready for Phase 3 (vault-writer)
 
 ## Current Position
 
 Phase: 2 of 4 (AI Core)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-02-26 — 02-01 complete: SKILL.md created (898 words, 6-step pipeline, few-shot example)
+Plan: 2 of 2 in current phase (COMPLETE)
+Status: Phase 2 complete
+Last activity: 2026-02-26 — 02-02 complete: atomize.py created (270 lines, 12 functions, all validation)
 
-Progress: [████░░░░░░] 37%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -28,15 +28,16 @@ Progress: [████░░░░░░] 37%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 6 min | 2 min |
-| 02-ai-core | 1 | 2 min | 2 min |
+| 02-ai-core | 2 | 5 min | 2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (2 min), 01-03 (2 min), 02-01 (2 min)
-- Trend: Consistent 2 min/plan
+- Last 5 plans: 01-01 (2 min), 01-02 (2 min), 01-03 (2 min), 02-01 (2 min), 02-02 (3 min)
+- Trend: Consistent 2-3 min/plan
 
 *Updated after each plan completion*
 | Phase 01-foundation P02 | 3 | 2 tasks | 2 files |
 | Phase 02-ai-core P01 | 2 | 2 tasks | 1 file |
+| Phase 02-ai-core P02 | 3 | 2 tasks | 1 file |
 
 ## Accumulated Context
 
@@ -57,6 +58,9 @@ Progress: [████░░░░░░] 37%
 - [Phase 02-ai-core 02-01]: SKILL.md uses runtime injection pattern — no embedded tags.yaml or rules content; atomize.py injects at call time
 - [Phase 02-ai-core 02-01]: Two-pass wikilink strategy: enumerate all titles in Step 1, insert links in Step 3 using exact title strings — prevents broken wikilinks
 - [Phase 02-ai-core 02-01]: Atom plan JSON schema locked at schema_version 1 — additions are breaking changes requiring version bump
+- [Phase 02-ai-core 02-02]: Validation split: validate_atom_plan() hard errors (exit 1) vs. validate_tags/wikilinks() warnings (continue) — allows Claude's intentional semantic links
+- [Phase 02-ai-core 02-02]: proposed-tags.md always created even when empty — prevents Phase 3 FileNotFoundError; append mode with date+source headers preserves history
+- [Phase 02-ai-core 02-02]: config.toml absence falls back to default /tmp/dw/staging with stderr warning — graceful degradation, no crash
 
 ### Pending Todos
 
@@ -70,5 +74,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 02-ai-core plan 01 (SKILL.md created)
-Resume file: .planning/phases/02-ai-core/02-02-PLAN.md
+Stopped at: Completed 02-ai-core plan 02 (atomize.py created — Phase 2 complete)
+Resume file: .planning/phases/03-vault-writer/03-01-PLAN.md
