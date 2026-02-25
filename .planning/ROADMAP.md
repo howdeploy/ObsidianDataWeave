@@ -8,7 +8,7 @@ Four phases, each blocked on the previous. Phase 1 locks the config and schema d
 
 - [x] **Phase 1: Foundation** - Config, schema, rclone fetch, .docx parser, rules extraction (completed 2026-02-25)
 - [x] **Phase 2: AI Core** - SKILL.md, atomization, tagging, wikilinks, MOC planning (completed 2026-02-26)
-- [ ] **Phase 3: Writers** - Note generation, vault placement, MOC management, idempotency
+- [x] **Phase 3: Writers** - Note generation, vault placement, MOC management, idempotency (completed 2026-02-26)
 - [ ] **Phase 4: Publish** - Install script, README, Obsidian templates, GitHub release
 
 ## Phase Details
@@ -51,7 +51,7 @@ Plans:
 **Requirements**: VAULT-01, VAULT-02, VAULT-03, VAULT-04
 **Success Criteria** (what must be TRUE):
   1. Running the full pipeline on a real .docx file creates .md files in the correct Obsidian vault subfolders (MOCs in one folder, atomic notes in another)
-  2. Running the same pipeline twice on the same document does not create duplicate notes — existing notes are skipped by content hash
+  2. Running the same pipeline twice on the same document does not create duplicate notes — existing notes are skipped by source_doc + title registry
   3. A MOC file is created for the processed document linking all generated atomic notes, organized by the source document's heading structure
   4. No files are written directly to the vault — all generation goes through /tmp/dw/staging/ first, vault_writer.py commits last
 **Plans:** 2 plans
@@ -81,5 +81,5 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-02-25 |
 | 2. AI Core | 2/2 | Complete | 2026-02-26 |
-| 3. Writers | 0/2 | Not started | - |
+| 3. Writers | 2/2 | Complete | 2026-02-26 |
 | 4. Publish | 0/2 | Not started | - |
