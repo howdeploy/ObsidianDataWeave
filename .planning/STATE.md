@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** One command turns any research document into properly structured, linked atomic notes inside Obsidian
-**Current focus:** Phase 3 complete — 2 of 2 plans done. Phase 4 pending (packaging/install).
+**Current focus:** Phase 4 context gathered; ready for planning
 
 ## Current Position
 
-Phase: 3 of 4 (Writers) — COMPLETE
-Plan: 2 of 2 in current phase (03-01 and 03-02 complete)
-Status: Phase 3 complete, ready for Phase 4
-Last activity: 2026-02-26 — 03-02 complete (vault_writer.py + process.py — full writer pipeline)
+Phase: 4 of 4 (Publish)
+Plan: 0 of 2 in current phase
+Status: Context gathered, ready to plan
+Last activity: 2026-02-26 — Phase 4 discuss-phase complete
 
 Progress: [████████░░] 75%
 
@@ -85,5 +85,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 03-writers 03-02-PLAN.md (vault_writer.py + process.py — Phase 3 complete)
-Resume file: .planning/phases/04-packaging/ (Phase 4 pending)
+Stopped at: Phase 4 discuss-phase complete, ready for /gsd:plan-phase 4
+Resume file: .planning/phases/04-publish/04-CONTEXT.md
