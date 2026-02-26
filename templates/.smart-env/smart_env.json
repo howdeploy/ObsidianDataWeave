@@ -1,0 +1,27 @@
+{
+  "is_obsidian_vault": true,
+  "smart_blocks": {
+    "embed_blocks": true,
+    "min_chars": 100
+  },
+  "smart_sources": {
+    "min_chars": 100,
+    "embed_model": {
+      "adapter": "transformers",
+      "transformers": {
+        "model_key": "TaylorAI/bge-micro-v2"
+      }
+    },
+    "excluded_headings": "",
+    "file_exclusions": "Untitled",
+    "folder_exclusions": ""
+  },
+  "language": "en",
+  "connections_lists": {
+    "results_collection_key": "smart_sources",
+    "score_algo_key": "similarity",
+    "connections_post_process": "none",
+    "results_limit": 20,
+    "exclude_frontmatter_blocks": true
+  }
+}
