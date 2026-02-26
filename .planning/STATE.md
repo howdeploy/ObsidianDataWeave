@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** One command turns any research document into properly structured, linked atomic notes inside Obsidian
-**Current focus:** Phase 4 executing — 04-01 complete, 04-02 next
+**Current focus:** Phase 4 complete — all plans executed, project ready for first user
 
 ## Current Position
 
 Phase: 4 of 4 (Publish)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-02-26 — 04-01 install.sh, LICENSE, .gitignore complete
+Plan: 2 of 2 in current phase
+Status: Complete
+Last activity: 2026-02-26 — 04-02 README.md and Obsidian templates complete
 
-Progress: [█████████░] 90%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 2.3 min
+- Total plans completed: 8
+- Average duration: 2.25 min
 - Total execution time: 0.3 hours
 
 **By Phase:**
@@ -32,7 +32,7 @@ Progress: [█████████░] 90%
 | 03-writers | 2 | 5 min | 2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (2 min), 02-02 (3 min), 03-01 (3 min), 03-02 (2 min), 04-01 (2 min)
+- Last 5 plans: 02-02 (3 min), 03-01 (3 min), 03-02 (2 min), 04-01 (2 min), 04-02 (2 min)
 - Trend: Consistent 2-3 min/plan
 
 *Updated after each plan completion*
@@ -42,6 +42,7 @@ Progress: [█████████░] 90%
 | Phase 03-writers P01 | 3 | 1 task | 1 file |
 | Phase 03-writers P02 | 2 | 2 tasks | 3 files |
 | Phase 04-publish P01 | 2 | 2 tasks | 3 files |
+| Phase 04-publish P02 | 2 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,10 @@ Progress: [█████████░] 90%
 - [Phase 04-publish 04-01]: Python 3.10 supported with tomli backport, warns but does not fail — install.sh installs tomli automatically for 3.10
 - [Phase 04-publish 04-01]: grep -qF guard on CLAUDE.md prevents duplicate ObsidianDataWeave Pipeline skill registration on repeated installs
 - [Phase 04-publish 04-01]: vault_path non-existence warns but does not fail — user may configure Obsidian vault after initial install
+- [Phase 04-publish 04-02]: README is bilingual EN+RU in single file — EN first, then RU after horizontal rule separator
+- [Phase 04-publish 04-02]: Quick Start uses 3 commands: git clone + install.sh, rclone config, process command — minimal friction for Claude Code users
+- [Phase 04-publish 04-02]: Smart Connections config uses TaylorAI/bge-micro-v2 — free, local, no API key required
+- [Phase 04-publish 04-02]: Template example files intended to be deleted by user after reviewing the format — pipeline populates vault with real notes
 
 ### Pending Todos
 
@@ -90,5 +95,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 04-01-PLAN.md (install.sh, LICENSE, .gitignore)
-Resume file: .planning/phases/04-publish/04-02-PLAN.md
+Stopped at: Completed 04-02-PLAN.md (README.md, Obsidian templates) — ALL PHASES COMPLETE
+Resume file: None — project execution finished
