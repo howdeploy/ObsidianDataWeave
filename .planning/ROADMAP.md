@@ -57,8 +57,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — generate_notes.py: atom plan JSON to .md files in staging with YAML frontmatter and filename sanitization
-- [ ] 03-02-PLAN.md — vault_writer.py (staging to vault with dedup registry and folder routing) + process.py (full pipeline wrapper)
+- [x] 03-01-PLAN.md — generate_notes.py: atom plan JSON to .md files in staging with YAML frontmatter and filename sanitization
+- [x] 03-02-PLAN.md — vault_writer.py (staging to vault with dedup registry and folder routing) + process.py (full pipeline wrapper)
 
 ### Phase 4: Publish
 **Goal**: A new user can install ObsidianDataWeave with a single command, run their first document through the pipeline following the README, and the GitHub repository contains no hardcoded personal paths or secrets
@@ -69,11 +69,11 @@ Plans:
   2. The README contains copy-paste commands a user sends to Claude that walk through setup and first document import with no ambiguity
   3. The GitHub repo includes Obsidian vault templates (starter folder structure, MOC hub examples, atomic note examples) and a Smart Connections config ready to drop into any vault
   4. `git log --follow -- config.toml` returns no commits — personal config is gitignored, only config.example.toml is tracked
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 04-01: install.sh hardening, config portability, .gitignore, GitHub security review
-- [ ] 04-02: Bilingual README with zero-to-first-note walkthrough, Obsidian templates, Smart Connections config
+- [ ] 04-01-PLAN.md — install.sh cross-platform installer, MIT license, .gitignore hardening
+- [ ] 04-02-PLAN.md — Bilingual README with Quick Start, Obsidian templates, Smart Connections config
 
 ## Progress
 
