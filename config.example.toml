@@ -10,6 +10,3 @@ source_folder = "Sources"                   # source document references
 [rclone]
 remote = "gdrive:"                          # rclone remote name (check: rclone listremotes)
 staging_dir = "/tmp/dw/staging"            # temporary staging area
-
-[processing]
-default_note_type = "atomic"               # frontmatter note_type default

@@ -59,7 +59,7 @@ Claude fetches the file, splits it into atomic notes, generates a MOC, and write
 ## What happens under the hood
 
 1. **Fetch** — `rclone copy` downloads the `.docx` from Google Drive to a local staging directory
-2. **Parse** — `scripts/parse_doc.py` extracts headings, paragraphs, and tables into structured JSON
+2. **Parse** — `scripts/parse_docx.py` extracts headings, paragraphs, and tables into structured JSON
 3. **Atomize** — Claude reads the JSON and generates an atom plan (MOC title, atomic note titles, tags, wikilinks)
 4. **Generate** — `scripts/generate_notes.py` writes staging files with correct v1 frontmatter
 5. **Write** — `scripts/vault_writer.py` moves generated notes to your Obsidian vault folders
@@ -179,7 +179,7 @@ Claude скачает файл, разобьёт на атомарные зам�
 ## Что происходит под капотом
 
 1. **Fetch** — `rclone copy` скачивает `.docx` из Google Drive во временную директорию
-2. **Parse** — `scripts/parse_doc.py` извлекает заголовки, абзацы и таблицы в структурированный JSON
+2. **Parse** — `scripts/parse_docx.py` извлекает заголовки, абзацы и таблицы в структурированный JSON
 3. **Atomize** — Claude читает JSON и генерирует план атомизации (заголовок MOC, заголовки заметок, теги, вики-ссылки)
 4. **Generate** — `scripts/generate_notes.py` создаёт файлы со staging-фронтматером v1
 5. **Write** — `scripts/vault_writer.py` перемещает готовые заметки в папки вашего vault
