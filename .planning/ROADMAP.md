@@ -9,7 +9,8 @@ Four phases, each blocked on the previous. Phase 1 locks the config and schema d
 - [x] **Phase 1: Foundation** - Config, schema, rclone fetch, .docx parser, rules extraction (completed 2026-02-25)
 - [x] **Phase 2: AI Core** - SKILL.md, atomization, tagging, wikilinks, MOC planning (completed 2026-02-26)
 - [x] **Phase 3: Writers** - Note generation, vault placement, MOC management, idempotency (completed 2026-02-26)
-- [ ] **Phase 4: Publish** - Install script, README, Obsidian templates, GitHub release
+- [x] **Phase 4: Publish** - Install script, README, Obsidian templates, GitHub release (completed 2026-02-26)
+- [ ] **Phase 5: Publish Fixes** - PyYAML dependency, README typo, dead config cleanup (gap closure)
 
 ## Phase Details
 
@@ -75,6 +76,21 @@ Plans:
 - [ ] 04-01-PLAN.md — install.sh cross-platform installer, MIT license, .gitignore hardening
 - [ ] 04-02-PLAN.md — Bilingual README with Quick Start, Obsidian templates, Smart Connections config
 
+### Phase 5: Publish Fixes
+**Goal**: All audit gaps closed — PyYAML declared as dependency and installed, README references correct script names, dead config key removed
+**Depends on**: Phase 4
+**Requirements**: DIST-01, DIST-02
+**Gap Closure**: Closes gaps from v1.0 milestone audit
+**Success Criteria** (what must be TRUE):
+  1. `pip install -r requirements.txt` on a clean system installs PyYAML (no ModuleNotFoundError on `import yaml`)
+  2. `bash install.sh` installs PyYAML alongside python-docx
+  3. README.md references `scripts/parse_docx.py` (not `parse_doc.py`) in both EN and RU sections
+  4. No `[processing]` section in config.example.toml (or a script reads it — dead config removed)
+**Plans:** 1 plan
+
+Plans:
+- [ ] 05-01-PLAN.md — PyYAML dependency fix, README typo fix, dead config cleanup
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -82,4 +98,5 @@ Plans:
 | 1. Foundation | 3/3 | Complete | 2026-02-25 |
 | 2. AI Core | 2/2 | Complete | 2026-02-26 |
 | 3. Writers | 2/2 | Complete | 2026-02-26 |
-| 4. Publish | 0/2 | Not started | - |
+| 4. Publish | 2/2 | Complete | 2026-02-26 |
+| 5. Publish Fixes | 0/1 | Not started | - |

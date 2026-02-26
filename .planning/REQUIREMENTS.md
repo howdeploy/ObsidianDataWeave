@@ -104,8 +104,8 @@
 | CONF-01 | Phase 1 | Pending |
 | CONF-02 | Phase 1 | Pending |
 | CONF-03 | Phase 1 | Pending |
-| DIST-01 | Phase 4 | Pending |
-| DIST-02 | Phase 4 | Pending |
+| DIST-01 | Phase 5 (gap closure) | Pending |
+| DIST-02 | Phase 5 (gap closure) | Pending |
 | DIST-03 | Phase 4 | Pending |
 | DIST-04 | Phase 4 | Pending |
 
