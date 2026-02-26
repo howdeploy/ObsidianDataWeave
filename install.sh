@@ -100,10 +100,10 @@ install_python_docx() {
             pacman)
                 # lxml C extension may need the system package on Arch/Manjaro
                 sudo pacman -S --noconfirm python-lxml 2>/dev/null || true
-                pip3 install --break-system-packages python-docx
+                pip3 install --break-system-packages python-docx pyyaml
                 ;;
             *)
-                pip3 install python-docx
+                pip3 install python-docx pyyaml
                 ;;
         esac
         echo "python-docx installed."
