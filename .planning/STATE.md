@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** One command turns any research document into properly structured, linked atomic notes inside Obsidian
-**Current focus:** Phase 4 complete — all plans executed, project ready for first user
+**Current focus:** Phase 5 complete — v1.0 milestone audit gaps closed, project ready for first user
 
 ## Current Position
 
-Phase: 4 of 4 (Publish)
-Plan: 2 of 2 in current phase
+Phase: 5 of 5 (Publish Fixes)
+Plan: 1 of 1 in current phase
 Status: Complete
-Last activity: 2026-02-26 — 04-02 README.md and Obsidian templates complete
+Last activity: 2026-02-26 — 05-01 PyYAML dependency, README typo, dead config key
 
 Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 2.25 min
-- Total execution time: 0.3 hours
+- Total plans completed: 9
+- Average duration: 2.1 min
+- Total execution time: 0.32 hours
 
 **By Phase:**
 
@@ -43,6 +43,7 @@ Progress: [██████████] 100%
 | Phase 03-writers P02 | 2 | 2 tasks | 3 files |
 | Phase 04-publish P01 | 2 | 2 tasks | 3 files |
 | Phase 04-publish P02 | 2 | 2 tasks | 6 files |
+| Phase 05-publish-fixes P01 | 1 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -52,7 +53,7 @@ Progress: [██████████] 100%
 - Safety: All generation writes to /tmp/dw/staging/ first; vault_writer.py is the only component that touches the real vault.
 - Methodology: MOC + Zettelkasten from two reference .docx files (Архитектура Второго мозга, Smart Connections) — rules distilled into rules/*.md in Phase 1.
 - Schema: Frontmatter fields locked at v1: tags, date, source_doc, note_type. Treat additions as breaking changes.
-- Config schema locked at v1: [vault] vault_path/notes_folder/moc_folder/source_folder, [rclone] remote/staging_dir, [processing] default_note_type — additions are breaking changes. (01-01)
+- Config schema locked at v1: [vault] vault_path/notes_folder/moc_folder/source_folder, [rclone] remote/staging_dir — [processing] section removed as dead key. (01-01, updated 05-01)
 - English-only tags with / separator: #tech/ai not #тех/ии — universal for GitHub package audience. 42 tags across 7 domains in tags.yaml v1. (01-01)
 - python-docx is the only non-stdlib dependency — mammoth and python-frontmatter excluded per research findings. (01-01)
 - Rules-as-instructions pattern: rules/*.md written as imperative Claude instructions, 400-600 words each, loadable as context block for Phase 2 SKILL.md. (01-03)
@@ -82,6 +83,8 @@ Progress: [██████████] 100%
 - [Phase 04-publish 04-02]: Quick Start uses 3 commands: git clone + install.sh, rclone config, process command — minimal friction for Claude Code users
 - [Phase 04-publish 04-02]: Smart Connections config uses TaylorAI/bge-micro-v2 — free, local, no API key required
 - [Phase 04-publish 04-02]: Template example files intended to be deleted by user after reviewing the format — pipeline populates vault with real notes
+- [Phase 05-publish-fixes 05-01]: PyYAML declared as explicit pip dependency (>=6.0) — previously used via string interpolation without declaring the dep; add to requirements.txt and install.sh
+- [Phase 05-publish-fixes 05-01]: Dead [processing] config key removed from config.example.toml — default_note_type was never read by any script
 
 ### Pending Todos
 
@@ -95,5 +98,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 04-02-PLAN.md (README.md, Obsidian templates) — ALL PHASES COMPLETE
+Stopped at: Completed 05-01-PLAN.md (PyYAML dependency, README typo, dead config key) — ALL PHASES COMPLETE
 Resume file: None — project execution finished
