@@ -25,3 +25,22 @@ processed.json
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor/IDE configs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Staging artifacts (safety net if staging_dir changed from /tmp/)
+*-parsed.json
+*-atom-plan.json
+proposed-tags.md
+
+# Logs
+*.log
