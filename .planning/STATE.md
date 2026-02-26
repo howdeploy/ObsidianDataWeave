@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** One command turns any research document into properly structured, linked atomic notes inside Obsidian
-**Current focus:** Phase 4 planned; ready for execution
+**Current focus:** Phase 4 executing — 04-01 complete, 04-02 next
 
 ## Current Position
 
 Phase: 4 of 4 (Publish)
-Plan: 0 of 2 in current phase
-Status: Planned, ready to execute
-Last activity: 2026-02-26 — Phase 4 plan-phase complete
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-02-26 — 04-01 install.sh, LICENSE, .gitignore complete
 
-Progress: [████████░░] 80%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -32,7 +32,7 @@ Progress: [████████░░] 80%
 | 03-writers | 2 | 5 min | 2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (2 min), 02-02 (3 min), 03-01 (3 min), 03-02 (2 min)
+- Last 5 plans: 02-01 (2 min), 02-02 (3 min), 03-01 (3 min), 03-02 (2 min), 04-01 (2 min)
 - Trend: Consistent 2-3 min/plan
 
 *Updated after each plan completion*
@@ -41,6 +41,7 @@ Progress: [████████░░] 80%
 | Phase 02-ai-core P02 | 3 | 2 tasks | 1 file |
 | Phase 03-writers P01 | 3 | 1 task | 1 file |
 | Phase 03-writers P02 | 2 | 2 tasks | 3 files |
+| Phase 04-publish P01 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,10 @@ Progress: [████████░░] 80%
 - [Phase 03-writers 03-02]: Registry updated atomically after all vault writes (single save_registry call) — prevents partial-write state corruption
 - [Phase 03-writers 03-02]: Non-TTY auto-skip for conflict resolution — sys.stdin.isatty() detects Claude Code subprocess context and skips rather than hanging on input()
 - [Phase 03-writers 03-02]: process.py uses subprocess (not direct imports) — each script remains independently callable and testable
+- [Phase 04-publish 04-01]: pip --break-system-packages applied ONLY for pacman-managed systems (Arch/Manjaro) — other distros use plain pip3 install
+- [Phase 04-publish 04-01]: Python 3.10 supported with tomli backport, warns but does not fail — install.sh installs tomli automatically for 3.10
+- [Phase 04-publish 04-01]: grep -qF guard on CLAUDE.md prevents duplicate ObsidianDataWeave Pipeline skill registration on repeated installs
+- [Phase 04-publish 04-01]: vault_path non-existence warns but does not fail — user may configure Obsidian vault after initial install
 
 ### Pending Todos
 
@@ -79,11 +84,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- lxml C dependency: verify `pip3 install python-docx` works without `pacman -S python-lxml` on Manjaro — document in install.sh if pacman needed
+- lxml C dependency: RESOLVED — install.sh runs `sudo pacman -S --noconfirm python-lxml || true` before pip3 install python-docx for pacman systems; other distros use plain pip3
 - Cyrillic filename handling: RESOLVED — UTF-8 byte truncation (200B) confirmed working on Manjaro ext4; generate_notes.py verified with Cyrillic test filenames
 
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Phase 4 plan-phase complete, ready for /gsd:execute-phase 4
-Resume file: .planning/phases/04-publish/04-01-PLAN.md
+Stopped at: Completed 04-01-PLAN.md (install.sh, LICENSE, .gitignore)
+Resume file: .planning/phases/04-publish/04-02-PLAN.md
