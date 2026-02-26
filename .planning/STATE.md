@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** One command turns any research document into properly structured, linked atomic notes inside Obsidian
-**Current focus:** Phase 4 context gathered; ready for planning
+**Current focus:** Phase 4 planned; ready for execution
 
 ## Current Position
 
 Phase: 4 of 4 (Publish)
 Plan: 0 of 2 in current phase
-Status: Context gathered, ready to plan
-Last activity: 2026-02-26 — Phase 4 discuss-phase complete
+Status: Planned, ready to execute
+Last activity: 2026-02-26 — Phase 4 plan-phase complete
 
-Progress: [████████░░] 75%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -85,5 +85,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Phase 4 discuss-phase complete, ready for /gsd:plan-phase 4
-Resume file: .planning/phases/04-publish/04-CONTEXT.md
+Stopped at: Phase 4 plan-phase complete, ready for /gsd:execute-phase 4
+Resume file: .planning/phases/04-publish/04-01-PLAN.md
