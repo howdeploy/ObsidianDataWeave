@@ -71,7 +71,7 @@ For each note, select 2–5 tags from the injected tag list:
 Generate exactly one MOC note — **always last, after all atomic note titles are finalized**:
 
 - Title: cleaned source document name (remove file extension, strip colons, truncate at 60 chars) + `" — MOC"`
-- Body: two-level hierarchy mirroring source document headings — Level 1 sections become H2 headers; notes from each section listed as `[[wikilinks]]` under their parent heading
+- Body: starts directly with content (NO `# Title` H1 heading — Obsidian uses filename as title). Two-level hierarchy mirroring source document headings — Level 1 sections become `##` headers; notes from each section listed as `[[wikilinks]]` under their parent heading
 - `note_type: "moc"`, tags: document's primary domain tags
 - MOC is navigational only — no analysis, no new content
 

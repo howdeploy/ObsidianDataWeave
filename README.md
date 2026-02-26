@@ -25,7 +25,7 @@ Open Claude Code in your terminal and send these commands one at a time:
 Clone the repo and run the installer:
 
 ```bash
-git clone https://github.com/USER/ObsidianDataWeave.git && cd ObsidianDataWeave && bash install.sh
+git clone https://github.com/howdeploy/ObsidianDataWeave.git && cd ObsidianDataWeave && bash install.sh
 ```
 
 The installer will:
@@ -110,7 +110,13 @@ Key fields: `vault_path` (required), `remote` (must match your rclone remote nam
 - Python 3.10+ (3.11+ recommended)
 - [rclone](https://rclone.org/) configured with Google Drive access
 - [Claude Code](https://claude.ai/code)
-- Obsidian with [Smart Connections](https://github.com/brianpetro/obsidian-smart-connections) plugin (optional, for vector search)
+- `vault_path` in `config.toml` must point to your Obsidian vault (absolute path)
+
+**Required Obsidian plugins:**
+
+- [Smart Connections](https://github.com/brianpetro/obsidian-smart-connections) — vector semantic search across your vault (local embeddings, no API key)
+- [Local REST API](https://github.com/coddingtonbear/obsidian-local-rest-api) — HTTP interface for reading/writing vault contents
+- [MCP Obsidian](https://github.com/MarkusPfundstein/mcp-obsidian) — MCP server connecting Claude Code to Obsidian via Local REST API
 
 ## License
 
@@ -145,7 +151,7 @@ ObsidianDataWeave — это навык для Claude Code, который ск�
 Клонируйте репозиторий и запустите установщик:
 
 ```bash
-git clone https://github.com/USER/ObsidianDataWeave.git && cd ObsidianDataWeave && bash install.sh
+git clone https://github.com/howdeploy/ObsidianDataWeave.git && cd ObsidianDataWeave && bash install.sh
 ```
 
 Установщик:
@@ -230,7 +236,13 @@ default_note_type = "atomic"
 - Python 3.10+ (рекомендуется 3.11+)
 - [rclone](https://rclone.org/) настроенный с доступом к Google Drive
 - [Claude Code](https://claude.ai/code)
-- Obsidian с плагином [Smart Connections](https://github.com/brianpetro/obsidian-smart-connections) (опционально, для векторного поиска)
+- `vault_path` в `config.toml` должен указывать на ваш vault Obsidian (абсолютный путь)
+
+**Обязательные плагины Obsidian:**
+
+- [Smart Connections](https://github.com/brianpetro/obsidian-smart-connections) — векторный семантический поиск по vault (локальные эмбеддинги, без API ключа)
+- [Local REST API](https://github.com/coddingtonbear/obsidian-local-rest-api) — HTTP-интерфейс для чтения/записи содержимого vault
+- [MCP Obsidian](https://github.com/MarkusPfundstein/mcp-obsidian) — MCP-сервер, соединяющий Claude Code с Obsidian через Local REST API
 
 ## Лицензия
 

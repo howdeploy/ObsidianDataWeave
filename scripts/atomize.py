@@ -5,6 +5,7 @@ Usage:
 """
 
 import json
+import os
 import yaml
 import sys
 import subprocess
@@ -151,12 +152,16 @@ def assemble_prompt(
 
 def call_claude(prompt: str) -> str:
     """Call Claude CLI with the assembled prompt, return stdout."""
+    # Strip CLAUDECODE to allow nested claude invocation from within Claude Code
+    clean_env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
+
     result = subprocess.run(
         ["claude", "--print"],
         input=prompt,
         capture_output=True,
         text=True,
         encoding="utf-8",
+        env=clean_env,
     )
     if result.returncode != 0:
         raise RuntimeError(

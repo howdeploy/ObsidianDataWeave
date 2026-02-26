@@ -1,6 +1,9 @@
 # User config with real paths — never commit this
 config.toml
 
+# GSD planning artifacts (contain local paths)
+.planning/
+
 # Python
 __pycache__/
 *.pyc

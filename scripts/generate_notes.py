@@ -95,7 +95,7 @@ def render_note_md(note: dict) -> str:
         source_doc: always double-quoted to handle colons in titles
         note_type:  as-is
 
-    Body: blank line, '# {title}', blank line, body text.
+    Body: blank line, body text (no H1 — Obsidian uses filename as title).
     Uses string interpolation — NOT PyYAML — to keep exact formatting.
     """
     title = note.get("title", "")
@@ -119,8 +119,6 @@ def render_note_md(note: dict) -> str:
         f"source_doc: {source_doc_quoted}\n"
         f"note_type: {note_type}\n"
         "---\n"
-        "\n"
-        f"# {title}\n"
         "\n"
         f"{body}\n"
     )
