@@ -24,6 +24,8 @@ build/
 
 # Per-user dedup registry — contains vault-local data, not suitable for git
 processed.json
+dedup_reviewed.json
+similar_fix_reviewed.json
 
 # OS artifacts
 .DS_Store
@@ -44,6 +46,10 @@ env/
 *-parsed.json
 *-atom-plan.json
 proposed-tags.md
+
+# Cached source documents from Google Drive — personal data
+gdrive-import/
+*.docx
 
 # Logs
 *.log

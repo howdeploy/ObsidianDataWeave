@@ -2,6 +2,7 @@
 
 Usage:
     python3 scripts/vault_writer.py --staging <staging-dir> [--atom-plan <atom-plan.json>]
+    python3 scripts/vault_writer.py --staging <staging-dir> --non-interactive --on-conflict skip
 
 vault_writer.py is the ONLY script permitted to write to vault_path.
 
@@ -20,54 +21,23 @@ All diagnostics go to stderr. Summary printed to both stdout and stderr.
 
 import argparse
 import json
+import os
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 
-# Attempt tomllib import (stdlib since Python 3.11; fallback to tomli for 3.10)
+import yaml
+
 try:
-    import tomllib
-except ImportError:
-    try:
-        import tomli as tomllib  # type: ignore
-    except ImportError:
-        tomllib = None  # type: ignore
-
-PROJECT_ROOT = Path(__file__).parent.parent
-REGISTRY_PATH = PROJECT_ROOT / "processed.json"
-
-
-# ── Config ──────────────────────────────────────────────────────────────────────
+    from scripts.config import PROJECT_ROOT, REGISTRY_PATH, load_config as _load_config
+except ModuleNotFoundError:
+    from config import PROJECT_ROOT, REGISTRY_PATH, load_config as _load_config
 
 
 def load_config() -> dict:
-    """Read config.toml via tomllib.
-
-    Unlike generate_notes.py, vault_writer.py has NO fallback — vault_path MUST
-    be known before writing to the real Obsidian vault.  Missing or unparseable
-    config is a hard error.
-    """
-    config_path = PROJECT_ROOT / "config.toml"
-
-    if not config_path.exists():
-        print(
-            "ERROR: config.toml not found. vault_writer.py requires vault_path "
-            "to be configured. Copy config.example.toml to config.toml and fill "
-            "in your vault path.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    if tomllib is None:
-        print(
-            "ERROR: tomllib/tomli not available. vault_writer.py cannot parse "
-            "config.toml without it. Upgrade to Python 3.11+ or: pip install tomli",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    with open(config_path, "rb") as f:
-        return tomllib.load(f)
+    """Strict config loader — vault_path must be known before writing."""
+    return _load_config(strict=True)
 
 
 # ── Registry (processed.json) ───────────────────────────────────────────────────
@@ -101,11 +71,22 @@ def load_registry() -> dict:
 
 
 def save_registry(registry: dict) -> None:
-    """Write processed.json to PROJECT_ROOT atomically (all-at-once, after all copies)."""
-    REGISTRY_PATH.write_text(
-        json.dumps(registry, ensure_ascii=False, indent=2),
-        encoding="utf-8",
+    """Write processed.json atomically via tempfile + os.replace."""
+    data = json.dumps(registry, ensure_ascii=False, indent=2)
+    fd, tmp_path = tempfile.mkstemp(
+        dir=REGISTRY_PATH.parent, suffix=".tmp", prefix="processed_"
     )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(data)
+        os.replace(tmp_path, REGISTRY_PATH)
+    except BaseException:
+        # Clean up temp file on any failure
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
 
 
 # ── Frontmatter parsing ─────────────────────────────────────────────────────────
@@ -114,73 +95,46 @@ def save_registry(registry: dict) -> None:
 def parse_frontmatter(content: str) -> dict:
     """Extract key/value pairs from YAML frontmatter block (between --- delimiters).
 
-    Handles:
-    - tags as a list (lines starting with '  - ')
-    - double-quoted values (strips outer quotes)
-    - Keys returned: tags, date, source_doc, note_type
-
-    Returns an empty dict if no frontmatter found.
+    Uses PyYAML for robust parsing. Returns an empty dict if no frontmatter found.
     """
-    parts = content.split("---")
+    parts = content.split("---", 2)
     if len(parts) < 3:
         return {}
 
-    # The frontmatter block is between the first two '---'
     fm_block = parts[1]
-    result: dict = {}
-    current_key: str | None = None
-    tag_list: list[str] = []
-    in_tags = False
+    try:
+        parsed = yaml.safe_load(fm_block)
+    except yaml.YAMLError:
+        return {}
 
-    for line in fm_block.splitlines():
-        # Tag list item
-        if line.startswith("  - ") and in_tags:
-            tag_list.append(line[4:].strip())
-            continue
+    if not isinstance(parsed, dict):
+        return {}
 
-        # Top-level key: value pair
-        if ": " in line or (line.endswith(":") and not line.startswith(" ")):
-            in_tags = False
-            if ":" in line:
-                key, _, value = line.partition(":")
-                key = key.strip()
-                value = value.strip()
-
-                # Strip surrounding double-quotes from values like "Smart Connections: ..."
-                if value.startswith('"') and value.endswith('"'):
-                    value = value[1:-1].replace('\\"', '"')
-
-                if key == "tags":
-                    in_tags = True
-                    tag_list = []
-                    current_key = "tags"
-                else:
-                    result[key] = value
-                    current_key = key
-
-    # Commit collected tag list
-    if tag_list:
-        result["tags"] = tag_list
-
-    return result
+    return parsed
 
 
 # ── Conflict resolution ─────────────────────────────────────────────────────────
 
 
-def resolve_conflict(title: str, source_doc: str) -> str:
-    """Ask the user whether to skip or overwrite a duplicate note.
+def resolve_conflict(
+    title: str,
+    source_doc: str,
+    *,
+    non_interactive: bool = False,
+    on_conflict: str = "skip",
+) -> str:
+    """Resolve duplicate note handling.
 
     Returns 'skip' or 'overwrite'.
 
-    If stdin is not a TTY (non-interactive / pipe), auto-skips with a stderr message.
+    In non-interactive mode, returns the configured policy immediately.
     """
-    if not sys.stdin.isatty():
+    if non_interactive or not sys.stdin.isatty():
         print(
-            f"  [auto-skip] Duplicate (non-interactive): '{title}' from '{source_doc}'",
+            f"  [non-interactive] Duplicate '{title}' from '{source_doc}' -> {on_conflict}",
             file=sys.stderr,
         )
-        return "skip"
+        return on_conflict
 
     while True:
         try:
@@ -264,6 +218,17 @@ def main() -> None:
             "context. Frontmatter remains the primary source."
         ),
     )
+    parser.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="Disable prompts and use the policy from --on-conflict",
+    )
+    parser.add_argument(
+        "--on-conflict",
+        choices=("skip", "overwrite"),
+        default="skip",
+        help="Duplicate note policy in non-interactive mode (default: skip)",
+    )
     args = parser.parse_args()
 
     staging_dir = Path(args.staging)
@@ -341,6 +306,9 @@ def main() -> None:
         note_type = fm.get("note_type", "")
         source_doc = fm.get("source_doc", "")
         date_val = fm.get("date", "")
+        # YAML safe_load can parse dates as datetime.date objects — coerce to str
+        if not isinstance(date_val, str):
+            date_val = str(date_val)
 
         # Supplement with atom plan data if frontmatter is sparse
         if not note_type and title in atom_plan_titles:
@@ -353,7 +321,12 @@ def main() -> None:
             existing = registry.get(source_doc, {})
             existing_titles: list[str] = existing.get("note_titles", [])
             if title in existing_titles:
-                action = resolve_conflict(title, source_doc)
+                action = resolve_conflict(
+                    title,
+                    source_doc,
+                    non_interactive=args.non_interactive,
+                    on_conflict=args.on_conflict,
+                )
                 if action == "skip":
                     skipped += 1
                     continue

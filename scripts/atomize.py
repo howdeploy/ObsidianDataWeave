@@ -5,25 +5,20 @@ Usage:
 """
 
 import json
-import os
 import yaml
 import sys
-import subprocess
 import argparse
 import re
 from pathlib import Path
 from datetime import date
 
-# Attempt tomllib import (stdlib since Python 3.11; fallback to tomli for 3.10)
 try:
-    import tomllib
-except ImportError:
-    try:
-        import tomli as tomllib  # type: ignore
-    except ImportError:
-        tomllib = None  # type: ignore
+    from scripts.config import PROJECT_ROOT, load_config
+    from scripts.rewrite_backend import call_rewriter
+except ModuleNotFoundError:
+    from config import PROJECT_ROOT, load_config
+    from rewrite_backend import call_rewriter
 
-PROJECT_ROOT = Path(__file__).parent.parent
 REQUIRED_ATOM_FIELDS = {
     "id",
     "title",
@@ -32,34 +27,12 @@ REQUIRED_ATOM_FIELDS = {
     "source_doc",
     "date",
     "body",
-    "proposed_new_tags",
+}
+# Fields that get a default value if missing (e.g. truncated response)
+OPTIONAL_ATOM_FIELDS_DEFAULTS = {
+    "proposed_new_tags": [],
 }
 VALID_NOTE_TYPES = {"atomic", "moc", "source"}
-
-
-# ── Config ─────────────────────────────────────────────────────────────────────
-
-
-def load_config() -> dict:
-    """Read config.toml via tomllib; fall back to defaults if not found."""
-    config_path = PROJECT_ROOT / "config.toml"
-    if not config_path.exists():
-        print(
-            "WARNING: config.toml not found; using default staging_dir=/tmp/dw/staging",
-            file=sys.stderr,
-        )
-        return {"rclone": {"staging_dir": "/tmp/dw/staging"}}
-
-    if tomllib is None:
-        print(
-            "WARNING: tomllib/tomli not available; using default config. "
-            "Upgrade to Python 3.11+ or: pip install tomli",
-            file=sys.stderr,
-        )
-        return {"rclone": {"staging_dir": "/tmp/dw/staging"}}
-
-    with open(config_path, "rb") as f:
-        return tomllib.load(f)
 
 
 # ── File loaders ───────────────────────────────────────────────────────────────
@@ -147,28 +120,53 @@ def assemble_prompt(
     return "\n".join(lines)
 
 
-# ── Claude invocation ──────────────────────────────────────────────────────────
+# ── Rewrite backend invocation ────────────────────────────────────────────────
 
 
-def call_claude(prompt: str) -> str:
-    """Call Claude CLI with the assembled prompt, return stdout."""
-    # Strip CLAUDECODE to allow nested claude invocation from within Claude Code
-    clean_env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
+def _repair_truncated_json(text: str) -> dict | None:
+    """Attempt to close unclosed JSON structures and parse.
 
-    result = subprocess.run(
-        ["claude", "--print"],
-        input=prompt,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        env=clean_env,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"Claude CLI exited with code {result.returncode}.\n"
-            f"stderr: {result.stderr}"
-        )
-    return result.stdout.strip()
+    Returns parsed dict on success, None on failure.
+    """
+    # Strip trailing comma or incomplete tokens
+    repaired = text.rstrip()
+    # Remove trailing comma
+    while repaired and repaired[-1] in (",", ":", " ", "\n", "\r", "\t"):
+        repaired = repaired[:-1]
+
+    # Close open brackets/braces
+    stack: list[str] = []
+    in_str = False
+    escape = False
+    for ch in repaired:
+        if escape:
+            escape = False
+            continue
+        if ch == "\\":
+            escape = True
+            continue
+        if ch == '"':
+            in_str = not in_str
+            continue
+        if in_str:
+            continue
+        if ch in ("{", "["):
+            stack.append("}" if ch == "{" else "]")
+        elif ch in ("}", "]"):
+            if stack:
+                stack.pop()
+
+    # Close unterminated string
+    if in_str:
+        repaired += '"'
+
+    # Append closing chars in reverse order
+    repaired += "".join(reversed(stack))
+
+    try:
+        return json.loads(repaired)
+    except json.JSONDecodeError:
+        return None
 
 
 # ── JSON extraction ────────────────────────────────────────────────────────────
@@ -193,6 +191,14 @@ def extract_json(response: str) -> dict:
     try:
         return json.loads(text)
     except json.JSONDecodeError as e:
+        # Attempt structural repair before giving up
+        repaired = _repair_truncated_json(text)
+        if repaired is not None:
+            print(
+                "WARNING: JSON was malformed; auto-repaired truncated structure.",
+                file=sys.stderr,
+            )
+            return repaired
         raise ValueError(
             f"Failed to parse JSON from Claude response: {e}\n"
             f"Snippet: {text[:200]!r}"
@@ -347,7 +353,7 @@ def write_proposed_tags(
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
-            "Orchestrate Claude to convert parsed .docx JSON into atom plan JSON."
+            "Convert parsed .docx JSON into an atom plan JSON using the active rewrite backend."
         )
     )
     parser.add_argument("input", help="Path to parsed JSON file from parse_docx.py")
@@ -359,7 +365,19 @@ def main() -> None:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print assembled prompt to stdout and exit without calling Claude",
+        help="Print assembled prompt to stdout and exit without running the rewrite backend",
+    )
+    parser.add_argument(
+        "--backend",
+        choices=("auto", "claude", "codex"),
+        default="auto",
+        help="Rewrite backend to use (default: auto-detect from the current agent environment)",
+    )
+    parser.add_argument(
+        "--timeout-seconds",
+        type=int,
+        default=300,
+        help="Timeout for each rewrite backend call (default: 300)",
     )
     args = parser.parse_args()
 
@@ -387,9 +405,19 @@ def main() -> None:
         print(prompt)
         sys.exit(0)
 
-    # Call Claude
-    print("Calling Claude...", file=sys.stderr)
-    raw_response = call_claude(prompt)
+    # Call rewrite backend
+    print("Calling rewrite backend...", file=sys.stderr)
+    try:
+        resolved_backend, raw_response = call_rewriter(
+            prompt,
+            backend=args.backend,
+            timeout_seconds=args.timeout_seconds,
+            project_root=PROJECT_ROOT,
+        )
+    except RuntimeError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+    print(f"Rewrite backend: {resolved_backend}", file=sys.stderr)
 
     # Extract JSON from response
     try:
@@ -397,6 +425,12 @@ def main() -> None:
     except ValueError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
+
+    # Backfill optional fields with defaults (handles truncated responses)
+    for note in atom_plan.get("notes", []):
+        for field, default in OPTIONAL_ATOM_FIELDS_DEFAULTS.items():
+            if field not in note:
+                note[field] = default
 
     # Validate atom plan structure (hard errors → exit 1)
     validation_errors = validate_atom_plan(atom_plan)

@@ -10,6 +10,9 @@ Usage:
     # Start from atom plan JSON (skip fetch/parse/atomize):
     python3 scripts/process.py /path/to/atom-plan.json --from-plan
 
+    # Agent-safe write to vault without prompts:
+    python3 scripts/process.py "Research.docx" --non-interactive --on-conflict skip
+
 Stdout from each step is piped as input to the next step.
 Stderr from each step is passed through (diagnostics visible to user).
 """
@@ -17,9 +20,14 @@ Stderr from each step is passed through (diagnostics visible to user).
 import argparse
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).parent.parent
+try:
+    from scripts.config import PROJECT_ROOT, DEFAULT_STAGING_DIR, load_config
+except ModuleNotFoundError:
+    from config import PROJECT_ROOT, DEFAULT_STAGING_DIR, load_config
+
 SCRIPTS_DIR = Path(__file__).parent
 
 
@@ -56,6 +64,33 @@ def run(cmd: list[str], desc: str) -> str:
     return result.stdout.strip()
 
 
+def build_vault_writer_cmd(
+    vault_writer_py: str,
+    staging_dir: str,
+    atom_plan_path: str,
+    *,
+    non_interactive: bool = False,
+    on_conflict: str = "skip",
+) -> list[str]:
+    """Build the vault_writer.py subprocess command."""
+    cmd = [
+        sys.executable, vault_writer_py,
+        "--staging", staging_dir,
+        "--atom-plan", atom_plan_path,
+    ]
+    if non_interactive:
+        cmd.extend(["--non-interactive", "--on-conflict", on_conflict])
+    return cmd
+
+
+def create_run_staging_dir(base_dir: str, name_hint: str) -> str:
+    """Create an isolated staging directory for a single pipeline run."""
+    path = Path(base_dir)
+    path.mkdir(parents=True, exist_ok=True)
+    prefix = name_hint[:40].strip() or "run"
+    return tempfile.mkdtemp(prefix=f"{prefix}-", dir=path)
+
+
 # ── Main ────────────────────────────────────────────────────────────────────────
 
 
@@ -86,6 +121,29 @@ def main() -> None:
             "skip fetch/parse/atomize and go straight to generate_notes + vault_writer"
         ),
     )
+    parser.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="Disable prompts during vault writes and use the policy from --on-conflict",
+    )
+    parser.add_argument(
+        "--on-conflict",
+        choices=("skip", "overwrite"),
+        default="skip",
+        help="Duplicate note policy for final vault writes in non-interactive mode (default: skip)",
+    )
+    parser.add_argument(
+        "--backend",
+        choices=("auto", "claude", "codex"),
+        default="auto",
+        help="Rewrite backend to use for atomization (default: auto-detect from the current agent environment)",
+    )
+    parser.add_argument(
+        "--timeout-seconds",
+        type=int,
+        default=300,
+        help="Timeout for each rewrite backend call (default: 300)",
+    )
     args = parser.parse_args()
 
     fetch_docx_sh = str(SCRIPTS_DIR / "fetch_docx.sh")
@@ -97,20 +155,25 @@ def main() -> None:
     if args.from_plan:
         # ── Short-circuit: input is an atom plan JSON path ──────────────────────
         atom_plan_path = args.input
+        cfg = load_config()
+        staging_root = cfg.get("rclone", {}).get("staging_dir", DEFAULT_STAGING_DIR)
+        run_staging_dir = create_run_staging_dir(staging_root, Path(atom_plan_path).stem)
 
         # Step 4: generate_notes.py
         staging_dir = run(
-            [sys.executable, generate_notes_py, atom_plan_path],
+            [sys.executable, generate_notes_py, atom_plan_path, "--staging-dir", run_staging_dir],
             desc=f"generate_notes: atom plan -> staging .md files",
         )
 
         # Step 5: vault_writer.py
         summary = run(
-            [
-                sys.executable, vault_writer_py,
-                "--staging", staging_dir,
-                "--atom-plan", atom_plan_path,
-            ],
+            build_vault_writer_cmd(
+                vault_writer_py,
+                staging_dir,
+                atom_plan_path,
+                non_interactive=args.non_interactive,
+                on_conflict=args.on_conflict,
+            ),
             desc="vault_writer: staging -> vault",
         )
         print(summary)
@@ -128,21 +191,8 @@ def main() -> None:
         # Build a placeholder path here; parse_docx.py will error if it doesn't exist.
         from pathlib import Path as P
 
-        # Try to derive staging_dir from config.toml
-        try:
-            import tomllib  # noqa: F401 — already imported at top, but try here too
-        except ImportError:
-            try:
-                import tomli as tomllib  # type: ignore
-            except ImportError:
-                tomllib = None  # type: ignore
-
-        staging_dir_guess = "/tmp/dw/staging"
-        config_path = PROJECT_ROOT / "config.toml"
-        if config_path.exists() and tomllib is not None:
-            with open(config_path, "rb") as f:
-                cfg = tomllib.load(f)
-            staging_dir_guess = cfg.get("rclone", {}).get("staging_dir", staging_dir_guess)
+        cfg = load_config()
+        staging_dir_guess = cfg.get("rclone", {}).get("staging_dir", DEFAULT_STAGING_DIR)
 
         docx_path = str(P(staging_dir_guess) / docx_filename)
         print(
@@ -168,23 +218,32 @@ def main() -> None:
 
     # Step 3: atomize.py — emits atom plan path to stdout
     atom_plan_path = run(
-        [sys.executable, atomize_py, parsed_json_path],
-        desc="atomize: parsed JSON -> atom plan (calls Claude)",
+        [
+            sys.executable, atomize_py, parsed_json_path,
+            "--backend", args.backend,
+            "--timeout-seconds", str(args.timeout_seconds),
+        ],
+        desc="atomize: parsed JSON -> atom plan (calls active rewrite backend)",
     )
 
     # Step 4: generate_notes.py — emits staging dir to stdout
+    cfg = load_config()
+    staging_root = cfg.get("rclone", {}).get("staging_dir", DEFAULT_STAGING_DIR)
+    run_staging_dir = create_run_staging_dir(staging_root, Path(atom_plan_path).stem)
     staging_dir = run(
-        [sys.executable, generate_notes_py, atom_plan_path],
+        [sys.executable, generate_notes_py, atom_plan_path, "--staging-dir", run_staging_dir],
         desc="generate_notes: atom plan -> staging .md files",
     )
 
     # Step 5: vault_writer.py — emits summary to stdout
     summary = run(
-        [
-            sys.executable, vault_writer_py,
-            "--staging", staging_dir,
-            "--atom-plan", atom_plan_path,
-        ],
+        build_vault_writer_cmd(
+            vault_writer_py,
+            staging_dir,
+            atom_plan_path,
+            non_interactive=args.non_interactive,
+            on_conflict=args.on_conflict,
+        ),
         desc="vault_writer: staging -> vault",
     )
     print(summary)

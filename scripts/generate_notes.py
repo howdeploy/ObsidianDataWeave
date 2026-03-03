@@ -1,7 +1,8 @@
-"""generate_notes.py — Render atom plan JSON into .md files in staging directory.
+"""generate_notes.py — Render atom plan JSON into .md files in a staging directory.
 
 Usage:
     python3 scripts/generate_notes.py <atom-plan.json>
+    python3 scripts/generate_notes.py <atom-plan.json> --staging-dir /tmp/dw/staging/run-123
 
 Prints staging directory path to stdout (for process.py chaining).
 All diagnostics go to stderr.
@@ -10,46 +11,16 @@ All diagnostics go to stderr.
 import argparse
 import json
 import sys
+import tempfile
 from pathlib import Path
 
-# Attempt tomllib import (stdlib since Python 3.11; fallback to tomli for 3.10)
 try:
-    import tomllib
-except ImportError:
-    try:
-        import tomli as tomllib  # type: ignore
-    except ImportError:
-        tomllib = None  # type: ignore
-
-PROJECT_ROOT = Path(__file__).parent.parent
+    from scripts.config import PROJECT_ROOT, load_config
+except ModuleNotFoundError:
+    from config import PROJECT_ROOT, load_config
 
 # Characters forbidden in Obsidian filenames
 _OBSIDIAN_FORBIDDEN = r'\/:"*<>|?'
-
-
-# ── Config ─────────────────────────────────────────────────────────────────────
-
-
-def load_config() -> dict:
-    """Read config.toml via tomllib; fall back to defaults if not found."""
-    config_path = PROJECT_ROOT / "config.toml"
-    if not config_path.exists():
-        print(
-            "WARNING: config.toml not found; using default staging_dir=/tmp/dw/staging",
-            file=sys.stderr,
-        )
-        return {"rclone": {"staging_dir": "/tmp/dw/staging"}}
-
-    if tomllib is None:
-        print(
-            "WARNING: tomllib/tomli not available; using default config. "
-            "Upgrade to Python 3.11+ or: pip install tomli",
-            file=sys.stderr,
-        )
-        return {"rclone": {"staging_dir": "/tmp/dw/staging"}}
-
-    with open(config_path, "rb") as f:
-        return tomllib.load(f)
 
 
 # ── Filename sanitization ───────────────────────────────────────────────────────
@@ -125,6 +96,14 @@ def render_note_md(note: dict) -> str:
     return content
 
 
+def create_staging_dir(base_dir: Path, name_hint: str) -> Path:
+    """Create an isolated staging subdirectory for a single run."""
+    prefix = sanitize_filename(name_hint) or "run"
+    prefix = prefix[:40].strip() or "run"
+    path = Path(tempfile.mkdtemp(prefix=f"{prefix}-", dir=base_dir))
+    return path
+
+
 # ── Main ────────────────────────────────────────────────────────────────────────
 
 
@@ -135,6 +114,10 @@ def main() -> None:
         )
     )
     parser.add_argument("input", help="Path to atom plan JSON file from atomize.py")
+    parser.add_argument(
+        "--staging-dir",
+        help="Optional staging directory override. If omitted, creates an isolated subdirectory under the configured staging root.",
+    )
     args = parser.parse_args()
 
     # Load atom plan JSON
@@ -150,8 +133,13 @@ def main() -> None:
 
     # Load config and derive staging dir
     config = load_config()
-    staging_dir = Path(config.get("rclone", {}).get("staging_dir", "/tmp/dw/staging"))
-    staging_dir.mkdir(parents=True, exist_ok=True)
+    staging_root = Path(config.get("rclone", {}).get("staging_dir", "/tmp/dw/staging"))
+    staging_root.mkdir(parents=True, exist_ok=True)
+    if args.staging_dir:
+        staging_dir = Path(args.staging_dir)
+        staging_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        staging_dir = create_staging_dir(staging_root, input_path.stem)
 
     notes = plan["notes"]
     atomic_count = 0

@@ -1,317 +1,265 @@
 #!/usr/bin/env bash
-# install.sh — Cross-platform idempotent installer for ObsidianDataWeave
-# Supports: pacman (Arch/Manjaro), brew (macOS), apt (Debian/Ubuntu), dnf (Fedora/RHEL)
-# Usage: bash install.sh
+# install.sh — one-command setup for ObsidianDataWeave
+#
+# One-liner install:
+#   git clone https://github.com/<user>/ObsidianDataWeave && cd ObsidianDataWeave && bash install.sh --vault-path "/path/to/vault"
+#
+# Claude Code prompt:
+#   "Clone github.com/<user>/ObsidianDataWeave and run install.sh with my vault at /path/to/vault"
 
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$REPO_DIR"
+MODE="claude"
+VAULT_PATH=""
+RCLONE_REMOTE="gdrive:"
+SKILL_DIR="${HOME}/.claude/skills/obsidian-dataweave"
 
-# ── Package manager detection ─────────────────────────────────────────────────
+usage() {
+    cat <<'EOF'
+Usage:
+  bash install.sh [--vault-path /abs/path] [--rclone-remote name:] [--mode local|claude|codex]
 
-detect_pkg_manager() {
-    if command -v pacman &>/dev/null; then
-        echo "pacman"
-    elif command -v brew &>/dev/null; then
-        echo "brew"
-    elif command -v apt-get &>/dev/null; then
-        echo "apt"
-    elif command -v dnf &>/dev/null; then
-        echo "dnf"
-    else
-        echo "unknown"
-    fi
+Modes:
+  claude  (default) Install locally + register global Claude Code skill.
+  codex   Install locally + verify Codex AGENTS.md.
+  local   Install locally only (deps + config).
+
+Examples:
+  bash install.sh --vault-path "/home/user/Obsidian Vault"
+  bash install.sh --mode codex --vault-path "/home/user/Vault"
+  bash install.sh --mode local
+EOF
 }
 
-PKG_MANAGER=$(detect_pkg_manager)
-echo ""
-echo "=== ObsidianDataWeave Installer ==="
-echo "Detected package manager: ${PKG_MANAGER}"
-echo "Repository: ${REPO_DIR}"
-echo ""
-
-# ── Python version check ──────────────────────────────────────────────────────
-
-check_python() {
-    echo "=== Step 0: Python version check ==="
-    if ! command -v python3 &>/dev/null; then
-        echo "ERROR: python3 not found. Please install Python 3.10 or later." >&2
-        exit 1
-    fi
-    PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
-    PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d. -f1)
-    PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d. -f2)
-    echo "Python version: ${PYTHON_VERSION}"
-    if [ "$PYTHON_MAJOR" -lt 3 ] || { [ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 10 ]; }; then
-        echo "ERROR: Python 3.10+ required. Found ${PYTHON_VERSION}." >&2
-        exit 1
-    fi
-    if [ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 11 ]; then
-        echo "WARNING: Python 3.10 detected. Scripts will work but consider upgrading to 3.11+ for native tomllib support."
-        PYTHON_NEEDS_TOMLI=true
-    else
-        PYTHON_NEEDS_TOMLI=false
-    fi
-    echo "Python check passed."
-}
-
-# ── rclone installation ───────────────────────────────────────────────────────
-
-install_rclone() {
-    echo ""
-    echo "=== Step 1: Install rclone ==="
-    if command -v rclone &>/dev/null; then
-        echo "rclone already installed: $(rclone --version 2>&1 | head -1)"
-        return
-    fi
-    echo "Installing rclone..."
-    case "$PKG_MANAGER" in
-        pacman)
-            sudo pacman -S --noconfirm rclone
-            ;;
-        brew)
-            brew install rclone
-            ;;
-        apt)
-            sudo apt-get update -qq && sudo apt-get install -y rclone
-            ;;
-        dnf)
-            sudo dnf install -y rclone
-            ;;
-        unknown)
-            echo "Unknown package manager. Installing rclone via official script..."
-            curl https://rclone.org/install.sh | sudo bash
-            ;;
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --mode)       MODE="${2:-}"; shift 2 ;;
+        --vault-path) VAULT_PATH="${2:-}"; shift 2 ;;
+        --rclone-remote) RCLONE_REMOTE="${2:-}"; shift 2 ;;
+        --help|-h)    usage; exit 0 ;;
+        *) echo "ERROR: Unknown argument: $1" >&2; usage >&2; exit 1 ;;
     esac
-    echo "rclone installed: $(rclone --version 2>&1 | head -1)"
-}
+done
 
-# ── python-docx installation ──────────────────────────────────────────────────
+if [[ "$MODE" != "local" && "$MODE" != "claude" && "$MODE" != "codex" ]]; then
+    echo "ERROR: Unsupported mode '$MODE'" >&2
+    usage >&2
+    exit 1
+fi
 
-install_python_docx() {
-    echo ""
-    echo "=== Step 2: Install python-docx ==="
-    if python3 -c "import docx" 2>/dev/null; then
-        echo "python-docx already installed."
+[[ "$RCLONE_REMOTE" != *: ]] && RCLONE_REMOTE="${RCLONE_REMOTE}:"
+
+# ── Step 1: Python ──────────────────────────────────────────────────────────
+
+echo "== Python =="
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "ERROR: python3 not found." >&2
+    exit 1
+fi
+python3 --version
+
+echo ""
+echo "== Dependencies =="
+if python3 -c "import docx, yaml" >/dev/null 2>&1; then
+    echo "Already installed."
+else
+    pip3 install -r "${REPO_DIR}/requirements.txt"
+fi
+
+# ── Step 2: config.toml ─────────────────────────────────────────────────────
+
+echo ""
+echo "== Config =="
+config_path="${REPO_DIR}/config.toml"
+if [[ -f "$config_path" ]]; then
+    echo "config.toml already exists."
+else
+    cp "${REPO_DIR}/config.example.toml" "$config_path"
+    if [[ -n "$VAULT_PATH" ]]; then
+        escaped=$(printf '%s\n' "$VAULT_PATH" | sed 's/[\/&]/\\&/g')
+        sed -i \
+            -e "s|/path/to/your/obsidian/vault|${escaped}|g" \
+            -e "s|gdrive:|${RCLONE_REMOTE}|g" \
+            "$config_path"
+        echo "Created config.toml with vault: ${VAULT_PATH}"
     else
-        echo "Installing python-docx..."
-        case "$PKG_MANAGER" in
-            pacman)
-                # lxml C extension may need the system package on Arch/Manjaro
-                sudo pacman -S --noconfirm python-lxml 2>/dev/null || true
-                pip3 install --break-system-packages python-docx pyyaml
-                ;;
-            *)
-                pip3 install python-docx pyyaml
-                ;;
-        esac
-        echo "python-docx installed."
+        echo "Created config.toml from template — fill in vault_path before use."
     fi
+fi
 
-    # Install tomli backport for Python 3.10 (stdlib tomllib added in 3.11)
-    if [ "${PYTHON_NEEDS_TOMLI:-false}" = "true" ]; then
-        if python3 -c "import tomli" 2>/dev/null; then
-            echo "tomli already installed."
-        else
-            echo "Installing tomli (backport for Python < 3.11)..."
-            case "$PKG_MANAGER" in
-                pacman)
-                    pip3 install --break-system-packages tomli
-                    ;;
-                *)
-                    pip3 install tomli
-                    ;;
-            esac
-            echo "tomli installed."
-        fi
+# ── Step 3: Verify repo files ───────────────────────────────────────────────
+
+echo ""
+echo "== Repository files =="
+for path in AGENTS.md SKILL.md SKILL_PERSONAL.md rules/atomization.md rules/taxonomy.md rules/personal_notes.md tags.yaml; do
+    if [[ -f "${REPO_DIR}/${path}" ]]; then
+        echo "  present: ${path}"
+    else
+        echo "  ERROR: missing ${path}" >&2
+        exit 1
     fi
-}
+done
 
-# ── config.toml creation ──────────────────────────────────────────────────────
+# ── Step 4: Mode-specific registration ──────────────────────────────────────
 
-create_config() {
+register_global_skill() {
     echo ""
-    echo "=== Step 3: Create config.toml ==="
-    if [ -f "${REPO_DIR}/config.toml" ]; then
-        echo "config.toml already exists — skipping."
-        return
-    fi
+    echo "== Global skill registration =="
 
-    echo "Creating config.toml from config.example.toml..."
-    echo ""
+    mkdir -p "${SKILL_DIR}/references"
 
-    read -rp "Obsidian vault path (absolute, e.g. /home/user/MyVault): " VAULT_PATH
-    read -rp "rclone remote name [gdrive:]: " RCLONE_REMOTE
-    RCLONE_REMOTE="${RCLONE_REMOTE:-gdrive:}"
-    # Ensure remote name ends with colon
-    [[ "$RCLONE_REMOTE" != *: ]] && RCLONE_REMOTE="${RCLONE_REMOTE}:"
+    # Generate global SKILL.md with absolute paths to this repo
+    cat > "${SKILL_DIR}/SKILL.md" <<SKILL_EOF
+---
+description: "Obsidian notes processing: enrich/atomize with Zettelkasten + .docx import"
+trigger_phrases:
+  - process note
+  - enrich note
+  - atomize note
+  - docx import
+  - zettelkasten rules
+  - обработай заметку
+  - обогати заметку
+  - разбей заметку
+  - обработай документ
+  - импортируй документ
+  - правила заметок
+---
 
-    # Escape special characters in VAULT_PATH for sed (forward slashes)
-    VAULT_PATH_ESC=$(printf '%s\n' "$VAULT_PATH" | sed 's/[\/&]/\\&/g')
+# ObsidianDataWeave
 
-    sed \
-        -e "s|/path/to/your/obsidian/vault|${VAULT_PATH_ESC}|g" \
-        -e "s|gdrive:|${RCLONE_REMOTE}|g" \
-        "${REPO_DIR}/config.example.toml" > "${REPO_DIR}/config.toml"
+Obsidian note processing pipeline: Zettelkasten atomization, enrichment, and .docx import.
 
-    echo "config.toml created."
+Repository: ${REPO_DIR}
 
-    # Warn if rclone remote is not configured yet
-    if command -v rclone &>/dev/null; then
-        if ! rclone listremotes 2>/dev/null | grep -qF "${RCLONE_REMOTE}"; then
-            echo "WARNING: rclone remote '${RCLONE_REMOTE}' not found in 'rclone listremotes'."
-            echo "  Run: rclone config  — then add your remote before using fetch_docx.sh"
-        else
-            echo "rclone remote '${RCLONE_REMOTE}' confirmed."
-        fi
-    fi
-}
+## Commands
 
-# ── vault subfolder creation ──────────────────────────────────────────────────
-
-create_vault_folders() {
-    echo ""
-    echo "=== Step 4: Create vault subfolders ==="
-    if [ ! -f "${REPO_DIR}/config.toml" ]; then
-        echo "WARNING: config.toml not found — skipping vault folder creation."
-        return
-    fi
-
-    # Read vault config using inline Python (tomllib stdlib in 3.11+, tomli backport for 3.10)
-    VAULT_INFO=$(python3 -c "
-import sys
-try:
-    import tomllib
-except ImportError:
-    try:
-        import tomli as tomllib
-    except ImportError:
-        print('TOMLLIB_MISSING')
-        sys.exit(0)
-with open('${REPO_DIR}/config.toml', 'rb') as f:
-    cfg = tomllib.load(f)
-vault = cfg.get('vault', {})
-vault_path = vault.get('vault_path', '')
-notes_folder = vault.get('notes_folder', 'Research & Insights')
-moc_folder = vault.get('moc_folder', 'Guides & Overviews')
-source_folder = vault.get('source_folder', 'Sources')
-print(vault_path)
-print(notes_folder)
-print(moc_folder)
-print(source_folder)
-" 2>/dev/null)
-
-    if [ "$VAULT_INFO" = "TOMLLIB_MISSING" ] || [ -z "$VAULT_INFO" ]; then
-        echo "WARNING: Could not read config.toml (tomllib/tomli not available)."
-        echo "  Install tomli: pip3 install tomli"
-        return
-    fi
-
-    VAULT_PATH=$(echo "$VAULT_INFO" | sed -n '1p')
-    NOTES_FOLDER=$(echo "$VAULT_INFO" | sed -n '2p')
-    MOC_FOLDER=$(echo "$VAULT_INFO" | sed -n '3p')
-    SOURCE_FOLDER=$(echo "$VAULT_INFO" | sed -n '4p')
-
-    if [ ! -d "$VAULT_PATH" ]; then
-        echo "WARNING: Vault path does not exist: ${VAULT_PATH}"
-        echo "  Create your Obsidian vault first, then run: bash install.sh"
-        echo "  (Skipping folder creation — config.toml is still valid)"
-        return
-    fi
-
-    echo "Vault path: ${VAULT_PATH}"
-    for FOLDER in "$NOTES_FOLDER" "$MOC_FOLDER" "$SOURCE_FOLDER"; do
-        FULL_PATH="${VAULT_PATH}/${FOLDER}"
-        if [ -d "$FULL_PATH" ]; then
-            echo "  [exists]  ${FOLDER}"
-        else
-            mkdir -p "$FULL_PATH"
-            echo "  [created] ${FOLDER}"
-        fi
-    done
-}
-
-# ── Claude Code skill registration ────────────────────────────────────────────
-
-register_claude_skill() {
-    echo ""
-    echo "=== Step 5: Register ObsidianDataWeave in Claude Code ==="
-    CLAUDE_DIR="${HOME}/.claude"
-    CLAUDE_MD="${CLAUDE_DIR}/CLAUDE.md"
-
-    # Create ~/.claude/ directory if it doesn't exist
-    if [ ! -d "$CLAUDE_DIR" ]; then
-        mkdir -p "$CLAUDE_DIR"
-        echo "Created ${CLAUDE_DIR}"
-    fi
-
-    # Create CLAUDE.md if it doesn't exist
-    if [ ! -f "$CLAUDE_MD" ]; then
-        touch "$CLAUDE_MD"
-        echo "Created ${CLAUDE_MD}"
-    fi
-
-    # Guard: skip if already registered
-    if grep -qF "## ObsidianDataWeave Pipeline" "$CLAUDE_MD"; then
-        echo "ObsidianDataWeave already registered in ${CLAUDE_MD} — skipping."
-        return
-    fi
-
-    # Append skill registration section
-    cat >> "$CLAUDE_MD" << SKILL_EOF
-
-
-## ObsidianDataWeave Pipeline
-
-Converts research .docx documents into atomic Obsidian notes via the full pipeline.
-
-### Trigger phrases
-- "process [document].docx"
-- "atomize document"
-- "run the pipeline"
-- "import to Obsidian"
-- "convert docx to notes"
-
-### Usage
-
+Process an existing note (auto-detects enrich/atomize):
 \`\`\`bash
-# Full pipeline (fetch from Google Drive, parse, atomize, write to vault):
-cd ${REPO_DIR} && python3 scripts/process.py "Document.docx"
-
-# Skip fetch (docx already in staging area):
-cd ${REPO_DIR} && python3 scripts/process.py "Document.docx" --skip-fetch
-
-# Start from existing atom plan JSON:
-cd ${REPO_DIR} && python3 scripts/process.py /path/to/atom-plan.json --from-plan
+cd ${REPO_DIR} && python3 scripts/process_note.py "Note Title"
 \`\`\`
 
-### Configuration
-- Config: ${REPO_DIR}/config.toml
-- SKILL.md: ${REPO_DIR}/SKILL.md
+Import a .docx document into the vault:
+\`\`\`bash
+cd ${REPO_DIR} && python3 scripts/process.py "Document.docx"
+\`\`\`
+
+Preview without changes:
+\`\`\`bash
+cd ${REPO_DIR} && python3 scripts/process_note.py "Note Title" --dry-run
+\`\`\`
+
+Non-interactive mode (safe for agents):
+\`\`\`bash
+cd ${REPO_DIR} && python3 scripts/process.py "Doc.docx" --non-interactive --on-conflict skip
+cd ${REPO_DIR} && python3 scripts/process_note.py "Note" --mode atomize --non-interactive --on-conflict skip
+\`\`\`
+
+Dedup review:
+\`\`\`bash
+cd ${REPO_DIR} && python3 scripts/dedup_vault.py --dry-run
+\`\`\`
+
+Check setup:
+\`\`\`bash
+cd ${REPO_DIR} && python3 scripts/doctor.py
+\`\`\`
+
+## Rules
+
+For detailed Zettelkasten rules, load the reference files:
+- \`references/atomization-rules.md\` — note splitting
+- \`references/taxonomy-rules.md\` — tags, wikilinks, MOC, frontmatter
+- \`references/personal-notes-rules.md\` — personal note specifics
+- \`references/tags.yaml\` — canonical tag taxonomy
+
+## Agent Contract
+
+Full agent contract: \`${REPO_DIR}/AGENTS.md\`
 SKILL_EOF
 
-    echo "Registered ObsidianDataWeave in ${CLAUDE_MD}"
+    # Symlink references (auto-update on git pull)
+    ln -sf "${REPO_DIR}/rules/atomization.md" "${SKILL_DIR}/references/atomization-rules.md"
+    ln -sf "${REPO_DIR}/rules/taxonomy.md" "${SKILL_DIR}/references/taxonomy-rules.md"
+    ln -sf "${REPO_DIR}/rules/personal_notes.md" "${SKILL_DIR}/references/personal-notes-rules.md"
+    ln -sf "${REPO_DIR}/tags.yaml" "${SKILL_DIR}/references/tags.yaml"
+
+    echo "Skill registered at: ${SKILL_DIR}"
 }
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+register_claude_md() {
+    echo ""
+    echo "== Claude Code CLAUDE.md =="
+    local claude_md="${HOME}/.claude/CLAUDE.md"
+    mkdir -p "${HOME}/.claude"
+    touch "$claude_md"
 
-main() {
-    check_python
-    install_rclone
-    install_python_docx
-    create_config
-    create_vault_folders
-    register_claude_skill
+    # Remove old block if present, then add new one
+    if grep -qF "## ObsidianDataWeave" "$claude_md"; then
+        # Remove existing block (from ## ObsidianDataWeave to next ## or EOF)
+        python3 -c "
+import re, sys
+with open('$claude_md', 'r') as f:
+    content = f.read()
+# Remove the ObsidianDataWeave section
+content = re.sub(
+    r'\n*## ObsidianDataWeave[^\n]*\n.*?(?=\n## |\Z)',
+    '',
+    content,
+    flags=re.DOTALL
+)
+with open('$claude_md', 'w') as f:
+    f.write(content.strip() + '\n')
+"
+        echo "Removed old ObsidianDataWeave block."
+    fi
 
-    echo ""
-    echo "=== Setup complete ==="
-    echo ""
-    echo "Next steps:"
-    echo "  1. Open README.md for Quick Start commands"
-    echo "  2. If rclone remote not configured: run 'rclone config'"
-    echo "  3. Process a document: python3 scripts/process.py \"Document.docx\""
-    echo ""
+    cat >> "$claude_md" <<CLAUDE_EOF
+
+## ObsidianDataWeave
+
+Obsidian note processing: enrich/atomize by Zettelkasten + .docx import.
+
+- **Skill:** \`~/.claude/skills/obsidian-dataweave/SKILL.md\`
+- **Repo:** \`${REPO_DIR}\`
+
+### Trigger phrases
+- "process note X" / "обработай заметку X"
+- "enrich note X" / "atomize note X"
+- "import document X.docx" / "обработай документ X.docx"
+- "zettelkasten rules" / "правила заметок"
+CLAUDE_EOF
+
+    echo "Registered in ${claude_md}"
 }
 
-main
+case "$MODE" in
+    claude)
+        register_global_skill
+        register_claude_md
+        ;;
+    codex)
+        echo ""
+        echo "== Codex integration =="
+        echo "Codex uses repo-local AGENTS.md — no global registration needed."
+        ;;
+    local)
+        :
+        ;;
+esac
+
+# ── Done ─────────────────────────────────────────────────────────────────────
+
+echo ""
+echo "== Done =="
+echo ""
+echo "Next steps:"
+echo "  1. Verify setup:    cd ${REPO_DIR} && python3 scripts/doctor.py"
+if [[ "$MODE" == "claude" ]]; then
+echo "  2. Use from anywhere: tell Claude 'process note \"My Note\"' or 'import document X.docx'"
+elif [[ "$MODE" == "codex" ]]; then
+echo "  2. From the repo:   python3 scripts/process.py \"Document.docx\""
+else
+echo "  2. Process a doc:   python3 scripts/process.py \"Document.docx\""
+fi
