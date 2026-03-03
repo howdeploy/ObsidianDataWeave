@@ -35,7 +35,7 @@ cd ObsidianDataWeave
 bash install.sh --vault-path "/путь/к/вашему/vault"
 ```
 
-Или скопируйте этот промпт в Claude Code — он сделает всё сам:
+Или скопируйте этот промпт в Claude Code или Codex — он сделает всё сам:
 
 ```
 Клонируй https://github.com/howdeploy/ObsidianDataWeave.git и запусти bash install.sh --vault-path "/путь/к/vault" в клонированной директории.
@@ -205,7 +205,7 @@ cd ObsidianDataWeave
 bash install.sh --vault-path "/path/to/your/obsidian/vault"
 ```
 
-Or copy this prompt into Claude Code — it handles everything:
+Or copy this prompt into Claude Code or Codex — it handles everything:
 
 ```
 Clone https://github.com/howdeploy/ObsidianDataWeave.git and run bash install.sh --vault-path "/path/to/vault" in the cloned directory.
