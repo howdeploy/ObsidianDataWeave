@@ -323,6 +323,50 @@ class TestValidateChangeset:
         assert exc_info.value.marker == "WIKI_LINKS_LOST"
         assert "redis" in str(exc_info.value)
 
+    @pytest.mark.parametrize("expected_links", [[], ["postgres"]])
+    def test_guard_uses_snapshot_when_model_omits_expected_links(
+        self, tmp_path: Path, expected_links: list[str]
+    ):
+        snap = _snap(tmp_path)
+        cs = ChangeSet(
+            project="demo",
+            compile_id="x",
+            updates=[
+                WikiPageUpdate(
+                    rel_path="pages/architecture.md",
+                    expected_existing_links=expected_links,
+                    frontmatter=_good_fm("demo", "core", "architecture"),
+                    body="# Architecture\n\nOnly [[postgres]] survived.",
+                )
+            ],
+        )
+        with pytest.raises(ValidationError) as exc_info:
+            validate_changeset(cs, snap)
+        assert exc_info.value.exit_code == 5
+        assert exc_info.value.marker == "WIKI_LINKS_LOST"
+        assert "redis" in str(exc_info.value)
+
+    @pytest.mark.parametrize(
+        "expected_links", [[], ["postgres"], ["postgres", "redis", "fabricated"]]
+    )
+    def test_preserved_snapshot_links_pass_despite_inaccurate_model_list(
+        self, tmp_path: Path, expected_links: list[str]
+    ):
+        snap = _snap(tmp_path)
+        cs = ChangeSet(
+            project="demo",
+            compile_id="x",
+            updates=[
+                WikiPageUpdate(
+                    rel_path="pages/architecture.md",
+                    expected_existing_links=expected_links,
+                    frontmatter=_good_fm("demo", "core", "architecture"),
+                    body="# Architecture\n\n[[postgres|Database]] and [[redis#Caching]].",
+                )
+            ],
+        )
+        validate_changeset(cs, snap)
+
 
 # ── materialize_to_staging ───────────────────────────────────────────────────
 
