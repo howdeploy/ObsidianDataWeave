@@ -42,6 +42,7 @@ import yaml
 try:
     from scripts.config import PROJECT_ROOT, load_config as _load_config
     from scripts.rewrite_backend import call_rewriter, write_debug_prompt
+    from scripts.vault_writer import get_vault_dest
     from scripts.wiki_models import (
         ChangeSet,
         ChangeSetShapeError,
@@ -57,6 +58,7 @@ try:
 except ModuleNotFoundError:
     from config import PROJECT_ROOT, load_config as _load_config
     from rewrite_backend import call_rewriter, write_debug_prompt
+    from vault_writer import get_vault_dest
     from wiki_models import (
         ChangeSet,
         ChangeSetShapeError,
@@ -363,7 +365,24 @@ def validate_changeset(cs: ChangeSet, snapshot: dict[str, Any]) -> None:
     for upd in cs.updates:
         _check_frontmatter(upd.rel_path, upd.frontmatter, cs.project, errors)
 
-    # 2. Updates must target pages that actually exist in the snapshot
+    # 2. Creates must be new; updates must already exist in the snapshot.
+    # Use the writer's routing: staging directories do not determine the
+    # destination. A relative dummy vault keeps this check free of I/O.
+    routing_config = {"vault": {"vault_path": "."}, "wiki": {"wiki_folder": "wiki"}}
+    routing_root = Path("wiki") / cs.project
+    for page in cs.creates:
+        try:
+            dest_dir = get_vault_dest(WIKI_NOTE_TYPE, routing_config, page.frontmatter)
+            dest_rel = str((dest_dir / Path(page.rel_path).name).relative_to(routing_root))
+        except ValueError as exc:
+            errors.append(f"creates[{page.rel_path}]: {exc}")
+            continue
+        existing_rel = page.rel_path if page.rel_path in snapshot["pages"] else dest_rel
+        if existing_rel in snapshot["pages"]:
+            errors.append(
+                f"creates[{page.rel_path}]: page '{existing_rel}' already exists in snapshot — "
+                "use updates[] for existing pages"
+            )
     for upd in cs.updates:
         if upd.rel_path not in snapshot["pages"]:
             errors.append(
