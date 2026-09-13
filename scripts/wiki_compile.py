@@ -429,7 +429,9 @@ def validate_changeset(cs: ChangeSet, snapshot: dict[str, Any]) -> None:
     #    treat it as a distinct failure mode from generic validation.
     lost_report: list[str] = []
     for upd in cs.updates:
-        expected = set(upd.expected_existing_links)
+        # The model's echoed list may omit or invent links. The pre-merge
+        # snapshot is the source of truth for what must survive the update.
+        expected = set(snapshot["existing_links"][upd.rel_path])
         actual = _extract_wikilink_targets(upd.body)
         missing = sorted(expected - actual)
         if missing:
