@@ -1,9 +1,12 @@
-"""Tests for scripts/wiki_compile.py — pure functions only (no backend call)."""
+"""Tests for scripts/wiki_compile.py — no live backend or vault writes."""
 
+import json
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
+from scripts import wiki_compile
 from scripts.wiki_compile import (
     ValidationError,
     _compute_post_compile_pages,
@@ -215,6 +218,47 @@ class TestValidateChangeset:
         with pytest.raises(ValidationError, match="does not exist in snapshot"):
             validate_changeset(cs, snap)
 
+    @pytest.mark.parametrize(
+        "rel_path,page_type,stem",
+        [
+            ("pages/architecture.md", "core", "architecture"),
+            ("drafts/architecture.md", "core", "architecture"),
+            ("./pages/architecture.md", "core", "architecture"),
+            ("entities/postgres.md", "entity", "postgres"),
+        ],
+    )
+    def test_create_cannot_replace_existing_page(self, tmp_path: Path, rel_path, page_type, stem):
+        cs = ChangeSet(
+            project="demo",
+            compile_id="x",
+            creates=[WikiPage(
+                rel_path=rel_path,
+                frontmatter=_good_fm("demo", page_type, stem),
+                body="# Replacement\n\n[[postgres]]",
+            )],
+        )
+        with pytest.raises(ValidationError, match=r"already exists in snapshot.*use updates\[\]") as exc:
+            validate_changeset(cs, _snap(tmp_path))
+        assert exc.value.exit_code == 3
+        assert exc.value.marker == "WIKI_VALIDATION_FAILED"
+
+    @pytest.mark.parametrize(
+        "rel_path,page_type,stem",
+        [("entities/kafka.md", "entity", "kafka"),
+         ("concepts/architecture.md", "concept", "architecture")],
+    )
+    def test_create_new_page_passes(self, tmp_path: Path, rel_path, page_type, stem):
+        cs = ChangeSet(
+            project="demo",
+            compile_id="x",
+            creates=[WikiPage(
+                rel_path=rel_path,
+                frontmatter=_good_fm("demo", page_type, stem),
+                body="# New page\n\n[[postgres]]",
+            )],
+        )
+        validate_changeset(cs, _snap(tmp_path))
+
     def test_unresolved_wikilink_fails(self, tmp_path: Path):
         snap = _snap(tmp_path)
         cs = ChangeSet(
@@ -366,6 +410,41 @@ class TestValidateChangeset:
             ],
         )
         validate_changeset(cs, snap)
+
+
+@pytest.mark.parametrize("update_only", [False, True])
+def test_compile_rejects_existing_create_before_writing(tmp_path: Path, monkeypatch, capsys, update_only):
+    wiki_root = tmp_path / "vault" / "LLM Wiki" / "demo"
+    _seed_space(wiki_root)
+    original = {p: p.read_bytes() for p in wiki_root.rglob("*.md")}
+    staging_root = tmp_path / "staging"
+    cs = ChangeSet(
+        project="demo",
+        compile_id="x",
+        creates=[WikiPage(
+            rel_path="pages/architecture.md",
+            frontmatter=_good_fm("demo", "core", "architecture"),
+            body="# Architecture\n\nOnly [[postgres]] remains.",
+        )],
+    )
+    config = {
+        "vault": {"vault_path": str(tmp_path / "vault")},
+        "rclone": {"staging_dir": str(staging_root)},
+    }
+    monkeypatch.setattr(wiki_compile, "_load_config", lambda **kwargs: config)
+    monkeypatch.setattr(wiki_compile, "call_rewriter", Mock(return_value=("fixture", json.dumps(cs.to_dict()))))
+    monkeypatch.setattr(wiki_compile, "write_debug_prompt", Mock(return_value=tmp_path / "prompt.txt"))
+    monkeypatch.setattr(wiki_compile, "DEBUG_RESPONSE_PATH", tmp_path / "response.json")
+    writer = Mock(return_value=0)
+    monkeypatch.setattr(wiki_compile, "write_to_vault", writer)
+    argv = ["wiki_compile.py", "demo"] + (["--update-only"] if update_only else [])
+    monkeypatch.setattr(wiki_compile.sys, "argv", argv)
+
+    assert wiki_compile.main() == 3
+    assert "WIKI_VALIDATION_FAILED" in capsys.readouterr().err
+    writer.assert_not_called()
+    assert not staging_root.exists()
+    assert {p: p.read_bytes() for p in wiki_root.rglob("*.md")} == original
 
 
 # ── materialize_to_staging ───────────────────────────────────────────────────
