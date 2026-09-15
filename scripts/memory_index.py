@@ -185,13 +185,13 @@ def parse_note(md_file: Path, vault_path: Path) -> dict:
         title = f"{title} {h1.group(1).strip()}"
 
     rel = md_file.relative_to(vault_path)
-    folder = str(rel.parent) if str(rel.parent) != "." else "."
+    folder = rel.parent.as_posix()
     return {
         "title": title,
         "headings": headings,
         "tags": " ".join(tags),
         "body": body,
-        "path": str(rel),
+        "path": rel.as_posix(),
         "folder": folder,
     }
 
@@ -207,7 +207,7 @@ def scan_files(vault_path: Path) -> dict[str, tuple[float, int]]:
             stat = md_file.stat()
         except OSError:
             continue
-        out[str(rel)] = (stat.st_mtime, stat.st_size)
+        out[rel.as_posix()] = (stat.st_mtime, stat.st_size)
     return out
 
 

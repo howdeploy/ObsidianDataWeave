@@ -155,7 +155,7 @@ def _detect_mode(root: Path) -> str:
 def _load_space(root: Path) -> WikiSpaceSnapshot:
     snapshot = WikiSpaceSnapshot(slug=root.name, root=root, mode=_detect_mode(root))
     for md_file in root.rglob("*.md"):
-        rel = str(md_file.relative_to(root))
+        rel = md_file.relative_to(root).as_posix()
         try:
             text = md_file.read_text(encoding="utf-8")
         except OSError:

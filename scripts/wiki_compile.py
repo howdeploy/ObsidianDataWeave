@@ -143,7 +143,7 @@ def snapshot_wiki_space(root: Path) -> dict[str, Any]:
     pages: dict[str, dict[str, Any]] = {}
     existing_links: dict[str, list[str]] = {}
     for md in root.rglob("*.md"):
-        rel = str(md.relative_to(root))
+        rel = md.relative_to(root).as_posix()
         try:
             text = md.read_text(encoding="utf-8")
         except OSError:
@@ -245,6 +245,11 @@ def assemble_prompt(
 
     # Strip frontmatter dicts down to the keys the LLM actually needs to see;
     # full frontmatter explodes the prompt for big wikis.
+    # Raw notes selected for THIS pass are sent verbatim in the raw batch
+    # below; repeating their bodies here doubles the prompt for no gain.
+    batch_rels = {entry["rel_path"] for entry in raw_batch}
+    _elided = "(raw input of this pass - see 'Raw inputs to merge in this pass')"
+
     snapshot_pages = {
         rel: {
             "frontmatter": {
@@ -253,7 +258,7 @@ def assemble_prompt(
                           "date", "source_doc", "confidence", "sources", "related")
                 if k in page["frontmatter"]
             },
-            "body": page["body"],
+            "body": _elided if rel in batch_rels else page["body"],
         }
         for rel, page in snapshot["pages"].items()
     }
@@ -373,7 +378,7 @@ def validate_changeset(cs: ChangeSet, snapshot: dict[str, Any]) -> None:
     for page in cs.creates:
         try:
             dest_dir = get_vault_dest(WIKI_NOTE_TYPE, routing_config, page.frontmatter)
-            dest_rel = str((dest_dir / Path(page.rel_path).name).relative_to(routing_root))
+            dest_rel = (dest_dir / Path(page.rel_path).name).relative_to(routing_root).as_posix()
         except ValueError as exc:
             errors.append(f"creates[{page.rel_path}]: {exc}")
             continue
