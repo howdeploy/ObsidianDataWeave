@@ -15,6 +15,17 @@ VAULT_PATH=""
 RCLONE_REMOTE="gdrive:"
 SKILL_DIR="${HOME}/.claude/skills/obsidian-dataweave"
 
+# Git Bash hands POSIX paths (/c/Users/...) to native Windows programs, which
+# cannot resolve them. `cygpath -m` yields C:/Users/... — accepted by Windows
+# Python and free of backslash-escape hazards. No-op where cygpath is absent.
+to_native_path() {
+    if command -v cygpath >/dev/null 2>&1; then
+        cygpath -m "$1"
+    else
+        printf '%s' "$1"
+    fi
+}
+
 usage() {
     cat <<'EOF'
 Usage:
@@ -148,7 +159,7 @@ register_claude_md() {
         # Remove existing block (from ## ObsidianDataWeave to next ## or EOF)
         python3 -c "
 import re, sys
-with open('$claude_md', 'r') as f:
+with open('$(to_native_path "$claude_md")', 'r', encoding='utf-8') as f:
     content = f.read()
 # Remove the ObsidianDataWeave section
 content = re.sub(
@@ -157,7 +168,7 @@ content = re.sub(
     content,
     flags=re.DOTALL
 )
-with open('$claude_md', 'w') as f:
+with open('$(to_native_path "$claude_md")', 'w', encoding='utf-8') as f:
     f.write(content.strip() + '\n')
 "
         echo "Removed old ObsidianDataWeave block."
@@ -170,7 +181,7 @@ with open('$claude_md', 'w') as f:
 Obsidian note processing: enrich/atomize by Zettelkasten + .docx import.
 
 - **Skill:** \`~/.claude/skills/obsidian-dataweave/SKILL.md\`
-- **Repo:** \`${REPO_DIR}\`
+- **Repo:** \`$(to_native_path "${REPO_DIR}")\`
 
 ### Trigger phrases
 - "process note X" / "обработай заметку X"
