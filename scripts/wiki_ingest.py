@@ -27,6 +27,7 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -94,7 +95,7 @@ def _build_raw_frontmatter(slug: str, label: str, source: str, today: str) -> st
         f"wiki_project: {slug}\n"
         "wiki_page_type: raw\n"
         "wiki_status: ingested\n"
-        f"raw_source: \"{source}\"\n"
+        f"raw_source: {json.dumps(str(source))}\n"
         "---\n"
         "\n"
     )

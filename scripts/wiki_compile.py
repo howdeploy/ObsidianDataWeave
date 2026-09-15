@@ -143,7 +143,7 @@ def snapshot_wiki_space(root: Path) -> dict[str, Any]:
     pages: dict[str, dict[str, Any]] = {}
     existing_links: dict[str, list[str]] = {}
     for md in root.rglob("*.md"):
-        rel = str(md.relative_to(root))
+        rel = md.relative_to(root).as_posix()
         try:
             text = md.read_text(encoding="utf-8")
         except OSError:
@@ -373,7 +373,7 @@ def validate_changeset(cs: ChangeSet, snapshot: dict[str, Any]) -> None:
     for page in cs.creates:
         try:
             dest_dir = get_vault_dest(WIKI_NOTE_TYPE, routing_config, page.frontmatter)
-            dest_rel = str((dest_dir / Path(page.rel_path).name).relative_to(routing_root))
+            dest_rel = (dest_dir / Path(page.rel_path).name).relative_to(routing_root).as_posix()
         except ValueError as exc:
             errors.append(f"creates[{page.rel_path}]: {exc}")
             continue
