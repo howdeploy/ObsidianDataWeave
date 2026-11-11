@@ -138,6 +138,9 @@ def test_failed_research_stops_without_retrying_or_importing(client, capsys, typ
     error = capsys.readouterr().err
     assert "failed" in error
     assert "timed out" not in error
+    client.research.start.assert_awaited_once_with(
+        "notebook", "SQLite FTS5", source="web", mode="deep",
+    )
     poll_kwargs = {"task_id": run_id} if typed else {}
     client.research.poll.assert_awaited_once_with("notebook", **poll_kwargs)
     client.sources.list.assert_not_awaited()
@@ -157,5 +160,9 @@ def test_typed_fast_research_uses_task_id_without_report_id(client):
     client.sources.list.return_value = []
 
     assert asyncio.run(research_notebook._run_research(research_args(mode="fast"))) == 0
+    client.research.start.assert_awaited_once_with(
+        "notebook", "SQLite FTS5", source="web", mode="fast",
+    )
     client.research.poll.assert_awaited_once_with("notebook", task_id="task")
+    client.sources.list.assert_awaited_once_with("notebook")
     client.research.import_sources.assert_not_awaited()
