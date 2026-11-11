@@ -180,6 +180,7 @@ def _dedupe_key(source, *, key_mode: str) -> str | None:
 
 
 async def _run_research(args: argparse.Namespace) -> int:
+    """Wait for the selected research run and import deduplicated sources once."""
     NotebookLMClient = _import_notebooklm_client()
 
     from_storage_kwargs: dict = {}
@@ -206,12 +207,14 @@ async def _run_research(args: argparse.Namespace) -> int:
         if not task_id:
             _err(f"research.start did not return a task_id (got: {start_result!r})")
             return 1
+        if typed_response:
+            task_id = start_result.get("report_id") or task_id
         _log(f"Research task_id={task_id}; polling every {args.poll_interval}s "
              f"(timeout {args.poll_timeout}s)")
 
         # ── Poll loop ──────────────────────────────────────────────────────────
         # Current SDKs require a run ID to disambiguate retained research tasks.
-        poll_kwargs = {"task_id": start_result.get("report_id") or task_id} if typed_response else {}
+        poll_kwargs = {"task_id": task_id} if typed_response else {}
         deadline = time.monotonic() + args.poll_timeout
         status_dict: dict = {}
         adopted_task_id = False
@@ -257,6 +260,9 @@ async def _run_research(args: argparse.Namespace) -> int:
             status = status_dict.get("status", "unknown")
             if status == "completed":
                 break
+            if status == "failed":
+                _err(f"Research task {task_id!r} failed.")
+                return 1
             # A newly started task may not be visible in the first polls yet.
             if time.monotonic() >= deadline:
                 _err(
