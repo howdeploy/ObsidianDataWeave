@@ -140,6 +140,11 @@ def _err(msg: str) -> None:
     print(f"ERROR: {msg}", file=sys.stderr)
 
 
+def _research_payload(result):
+    """Normalize SDK results, including nested sources, while retaining legacy dicts."""
+    return result.to_public_dict() if hasattr(result, "to_public_dict") else result
+
+
 def _source_url(source_obj) -> str | None:
     """Normalize a Source dataclass or dict into its URL (or None)."""
     if source_obj is None:
@@ -192,6 +197,8 @@ async def _run_research(args: argparse.Namespace) -> int:
             source=args.source,
             mode=args.mode,
         )
+        typed_response = hasattr(start_result, "to_public_dict")
+        start_result = _research_payload(start_result)
         if not start_result or not isinstance(start_result, dict):
             _err(f"research.start returned unexpected payload: {start_result!r}")
             return 1
@@ -203,11 +210,15 @@ async def _run_research(args: argparse.Namespace) -> int:
              f"(timeout {args.poll_timeout}s)")
 
         # ── Poll loop ──────────────────────────────────────────────────────────
+        # Current SDKs require a run ID to disambiguate retained research tasks.
+        poll_kwargs = {"task_id": start_result.get("report_id") or task_id} if typed_response else {}
         deadline = time.monotonic() + args.poll_timeout
         status_dict: dict = {}
         adopted_task_id = False
         while True:
-            status_dict = await client.research.poll(args.notebook_id) or {}
+            status_dict = _research_payload(
+                await client.research.poll(args.notebook_id, **poll_kwargs)
+            ) or {}
             # Guard: make sure we are tracking the task we started, not a
             # stale/concurrent one. The poll endpoint may return state for a
             # different task_id (e.g. if the notebook had a prior research run
@@ -246,9 +257,7 @@ async def _run_research(args: argparse.Namespace) -> int:
             status = status_dict.get("status", "unknown")
             if status == "completed":
                 break
-            if status == "no_research":
-                _err("Research poll returned status='no_research'. Task vanished?")
-                return 1
+            # A newly started task may not be visible in the first polls yet.
             if time.monotonic() >= deadline:
                 _err(
                     f"Polling timed out after {args.poll_timeout}s "
